@@ -93,7 +93,7 @@ def plotEvolution(H, psi0, tmax, dt):
             
     fig, axs = plt.subplots(n, 1, sharex=True, sharey=True, clear=True)
     for i in range(n):
-        axs[i].plot(ts, [p[str(i)] for p in probabilities], label=f'|{i}>')
+        axs[i].plot(ts, [p[i] for p in probabilities], label=f'|{i}>')
     plt.legend()
     plt.show()    
     
@@ -266,7 +266,7 @@ def example2_V2():
     H = BHamiltonian(81, B_Dirichlet(81))
     animateEvolution_V2(H, Statevector(init), 1200000, 300)
     
-example2_V2()
+# example2_V2()
 
 
 
