@@ -204,6 +204,9 @@ def initCond_static2(n : int):
 def gaussian(x, mu, sigma):
     return 1 / (sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
 
+def gaussian2D(x, y, mux, muy, sigma):
+    return 1 / (2 * np.pi * sigma ** 2) * np.exp(-0.5 * ((x - mux) ** 2 + (y - muy) ** 2) / sigma ** 2)
+
 def initial_condition_gaussian(n : int, var):
     '''Returns the initial state of the system in which the first [n] elements
     represent the vertices (with a gaussian starting state) and the last n+1
@@ -216,6 +219,22 @@ def initial_condition_gaussian(n : int, var):
         out.append(0)
     return out
 
+def initial_condition_gaussian2D(n : int, var, cond='Neumann'):
+    '''Returns the initial state of the system in which the first [n ** 2] elements
+    represent the vertices (with a gaussian starting state) and the last 2n ** 2 - 2n
+    elements represent the edges (with a zero starting state). The parameter [var]
+    dictates the spread of the distribution.'''
+    out = []
+    grid = [[(i + 1, j + 1) for j in range(n)] for i in range(n)]
+    for i in range(n ** 2):
+        out.append(gaussian2D(i, j, n ** 2 // 2, n ** 2 // 2, var))
+    if cond == 'Neumann':
+        for i in range(2 * n ** 2 - 2 * n):
+            out.append(0)
+    elif cond == 'Dirichlet':
+        for i in range(2 * n ** 2 + 2 * n - 4):
+            out.append(0)
+    return out
     
 #---------------------------------------------------------------------------------#
 
