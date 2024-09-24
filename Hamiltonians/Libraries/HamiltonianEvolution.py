@@ -244,6 +244,16 @@ def BHamiltonian1D(n : int, B):
     H = np.block([[np.zeros((n, n)), B], [np.transpose(B), np.zeros((n+1, n+1))]]) / (n+1)
     return H
 
+def BHamiltonian2D(n : int, B, cond='Neumann'):
+    '''Given an integer [n] and matrix [B], the function returns the Hamiltonian matrix 
+    for a graph with [n ** 2] vertices and [2 * n ** 2 - 2 * n] edges, as dictated by the article.'''
+    v = n ** 2
+    if cond == 'Neumann':
+        H = np.block([[np.zeros((n ** 2, n ** 2)), B], [np.transpose(B), np.zeros((2 * n ** 2 - 2 * n, 2 * n ** 2 - 2 * n))]]) / (n + 1)
+    elif cond == 'Dirichlet':
+        H = np.block([[np.zeros((n ** 2, n ** 2)), B], [np.transpose(B), np.zeros((2 * n ** 2 + 2 * n - 4, 2 * n ** 2 + 2 * n - 4))]]) / (n + 1)
+    return H
+
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -#
 # Euclidean norm of a vector
 def euclidean_norm(v):
