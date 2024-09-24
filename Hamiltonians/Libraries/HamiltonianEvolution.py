@@ -238,7 +238,7 @@ def B_Dirichlet(n : int):
         out.append([0]*i + [-1, 1] + [0]*(n-1-i))
     return array(out)
 
-def BHamiltonian(n : int, B):
+def BHamiltonian1D(n : int, B):
     '''Given an integer [n] and matrix [B], the function returns the Hamiltonian matrix 
     for a graph with [n] vertices and [n+1] edges, as dictated by the article.'''
     H = np.block([[np.zeros((n, n)), B], [np.transpose(B), np.zeros((n+1, n+1))]]) / (n+1)
@@ -256,14 +256,14 @@ def example2():
     init = initial_condition_gaussian(81, 3)
     init = init / euclidean_norm(init)
 
-    H = BHamiltonian(81, B(81))
+    H = BHamiltonian1D(81, B(81))
     animateEvolution(H, Statevector(init), 4000, 10)
     
 def example2_V2():
     init = initial_condition_gaussian(81, 3)
     init = init / euclidean_norm(init)
 
-    H = BHamiltonian(81, B_Dirichlet(81))
+    H = BHamiltonian1D(81, B_Dirichlet(81))
     animateEvolution_V2(H, Statevector(init), 1200000, 300)
     
 # example2_V2()
