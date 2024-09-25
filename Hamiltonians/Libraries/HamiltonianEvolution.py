@@ -75,6 +75,18 @@ def example1():
     
     
     
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 #==============================================================================#
 # MULTIPLE DIMENSIONAL STATE CASE
 
@@ -136,6 +148,10 @@ def animateEvolution(H, psi0, tmax, dt):
     anime = animation.FuncAnimation(fig=fig, func=update, frames=(len(ts) - 1), interval=1)
     plt.show()
 
+
+
+
+
 def animateEvolution_V2(H, psi0, tmax, dt):
     '''Animates the field of each vertex under the influence of 
     a Hamiltonian [H] and given the starting state [psi0]. The 
@@ -181,6 +197,24 @@ def animateEvolution_V2(H, psi0, tmax, dt):
     anime = animation.FuncAnimation(fig=fig, func=update, frames=(len(ts) - 1), interval=1)
     plt.show()
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#==============================================================================#
+# 2D CASE
+#==============================================================================#
 
 def animateEvolution2D(H, psi0, tmax, dt, n : int):
     '''Animates the field of each vertex under the influence of
@@ -240,6 +274,12 @@ def example123():
 
 
 
+
+
+
+
+
+
 def animateEvolution2D_V2(H, psi0, tmax, dt, n : int):
     '''Animates the field of each vertex under the influence of
     a Hamiltonian [H] and given the starting state [psi0]. The
@@ -249,7 +289,6 @@ def animateEvolution2D_V2(H, psi0, tmax, dt, n : int):
     In this function we specify the number of vertices [n].'''
     # Data preparation
     a = int(np.sqrt(n)) # a is the number of vertices in one dimension
-    m = len(psi0) # m is the size of the initial state
     ts = arange(0, tmax, dt) # Time steps
 
     # Evolution
@@ -269,8 +308,10 @@ def animateEvolution2D_V2(H, psi0, tmax, dt, n : int):
     fig = plt.figure(figsize=(10, 10))
     ax1 = fig.add_subplot(211, projection='3d')
     ax2 = fig.add_subplot(212, projection='3d')
-    # axs = plt.subplots(2, 1, sharex=True, projection='3d')
-    # fig, axs = plt.subplots(2, 1, sharex=True)
+    
+    ax1.set_zlim(-0.5, 0.5)
+    ax2.set_zlim(-0.5, 0.5)
+    
     x = [i / (n-1) for i in range(a)]
     y = [i / (n-1) for i in range(a)]
     
@@ -292,25 +333,47 @@ def animateEvolution2D_V2(H, psi0, tmax, dt, n : int):
         
     def update(frame, waveR, waveI, wavefunctionsR_FIXED, wavefunctionsI_FIXED):
         z1 = wavefunctionsR_FIXED[frame]
-        z2 = wavefunctionsI_FIXED[frame]
         waveR[0].remove()
-        waveI[0].remove()
         waveR[0] = ax1.plot_surface(x, y, z1, color='b')
+
+        z2 = wavefunctionsI_FIXED[frame]
+        waveI[0].remove()
         waveI[0] = ax2.plot_surface(x, y, z2, color='r')
         return [waveR, waveI]
-    
-    ax1.set_zlim(-0.5, 0.5)
-    ax2.set_zlim(-0.5, 0.5)
     
     anime = animation.FuncAnimation(fig=fig, func=update, fargs=(waveR, waveI, wavefunctionsR_FIXED, wavefunctionsI_FIXED), frames=(len(ts) - 1), interval=1)
     plt.show()
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #==============================================================================#
 # INITIAL CONDITIONS
-
+#------------------------------------------------------------------------------#
 # Static initial conditions
+
 def initCond_static1(n : int):
     mid = n // 2
     out = (mid - 1) * [0] + [1] + (n - mid) * [0] + (n + 1) * [0]
@@ -323,12 +386,19 @@ def initCond_static2(n : int):
 
 
 
+
+
+#------------------------------------------------------------------------------#
 # Implementation of the Gaussian wave packet
+
 def gaussian(x, mu, sigma):
     return 1 / (sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
 
+
 def gaussian2D(x, y, mux, muy, sigma):
     return 1 / (2 * np.pi * sigma ** 2) * np.exp(-0.5 * ((x - mux) ** 2 + (y - muy) ** 2) / sigma ** 2)
+
+
 
 def initial_condition_gaussian(n : int, var):
     '''Returns the initial state of the system in which the first [n] elements
@@ -341,6 +411,9 @@ def initial_condition_gaussian(n : int, var):
     for i in range(n+1):
         out.append(0)
     return out
+
+
+
 
 def initial_condition_gaussian2D(n : int, var, cond='Neumann'):
     '''Returns the initial state of the system in which the first [n ** 2] elements
@@ -359,8 +432,11 @@ def initial_condition_gaussian2D(n : int, var, cond='Neumann'):
             out.append(0)
     return out
     
-#---------------------------------------------------------------------------------#
-
+    
+    
+    
+#------------------------------------------------------------------------------#
+# B matrix
 
 def B(n : int):
     '''**NO BOUNDARY**: Given an integer [n], the function returns a matrix B, as defined
@@ -371,6 +447,9 @@ def B(n : int):
         out.append([0]*i + [-1, 1] + [0]*(n-1-i))
     return array(out)
 
+
+
+
 def B_Dirichlet(n : int):
     '''**DIRICHLET BOUNDARY**: Given an integer [n], the function returns a matrix B, as defined 
     in the article, for a graph with [n] vertices and [n+1] edges.'''
@@ -380,11 +459,17 @@ def B_Dirichlet(n : int):
         out.append([0]*i + [-1, 1] + [0]*(n-1-i))
     return array(out)
 
+
+
+
 def BHamiltonian1D(n : int, B):
     '''Given an integer [n] and matrix [B], the function returns the Hamiltonian matrix 
     for a graph with [n] vertices and [n+1] edges, as dictated by the article.'''
     H = np.block([[np.zeros((n, n)), B], [np.transpose(B), np.zeros((n+1, n+1))]]) / (n+1)
     return H
+
+
+
 
 def BHamiltonian2D(n : int, B, cond='Neumann'):
     '''Given an integer [n] and matrix [B], the function returns the Hamiltonian matrix 
@@ -396,12 +481,16 @@ def BHamiltonian2D(n : int, B, cond='Neumann'):
         H = np.block([[np.zeros((n ** 2, n ** 2)), B], [np.transpose(B), np.zeros((2 * n ** 2 + 2 * n - 4, 2 * n ** 2 + 2 * n - 4))]]) / (n + 1)
     return H
 
+
+
+
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -#
 # Euclidean norm of a vector
 def euclidean_norm(v):
     '''Given a vector v, the function returns the Euclidean norm of v.'''
     return np.sqrt(np.dot(v, v))
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -#
+
 
 # Example usage
 def example2():
@@ -424,16 +513,50 @@ def example2_V2():
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #==============================================================================#
 # PHASE EVOLUTION
 # The following functions are used to plot the phase evolution of a qubit state
 
 
 from numpy import angle
+
+
 def relativePhase(v : Statevector):
     '''Return the relative phase of the qubit state v'''
     a, b = v[0], v[1]
     return angle(b) - angle(a)   
+
+
 
 def plotPhaseEvolution(H, psi0, tmax, dt):
     '''Plot the evolution of the phase of the state psi0 under the Hamiltonian H'''
@@ -456,6 +579,8 @@ def plotPhaseEvolution(H, psi0, tmax, dt):
     plt.scatter(ts, theta_rel, color='green', label='Relative Phase', s=5)
     plt.legend()
     plt.show()
+
+
     
 # Example usage
 def example3():
