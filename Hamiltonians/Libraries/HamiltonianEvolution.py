@@ -13,6 +13,7 @@ from numpy import arange, array
 import numpy as np
 import matplotlib.animation as animation
 from termcolor import colored
+from math import ceil
 
 #==============================================================================#
 # THE BASICS
@@ -284,7 +285,7 @@ def initial_condition_gaussian2D(n : int, var, cond='Neumann'):
     out = []
     grid = [(i + 1, j + 1) for j in range(n) for i in range(n)]
     for (i,j) in grid:
-        out.append(gaussian2D(i, j, n // 2, n // 2, var))
+        out.append(gaussian2D(i, j, ceil(n/2), ceil(n/2), var))
     if cond == 'Neumann':
         for i in range(2 * n ** 2 - 2 * n):
             out.append(0)
