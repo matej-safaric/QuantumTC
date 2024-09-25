@@ -7,8 +7,10 @@ from Hamiltonians.Libraries import HamiltonianEvolution as HE
 #                             GLOBAL VARIABLES                                 #
 #------------------------------------------------------------------------------#
 
-n = 5
-var = 1
+n = 9
+var = 2
+t = 100
+dt = 1
 
 #==============================================================================#
 #                              GRID FUNCTIONS                                  #
@@ -98,8 +100,6 @@ def B_Neumann(n : int):
         out[i][g.index(b)] = -1
     return out.transpose()
 
-print(B_Dirichlet(2))
-
 #==============================================================================#
 #                           SIMULATION FUNCTIONS                               #
 #------------------------------------------------------------------------------#
@@ -133,7 +133,7 @@ def simulation2D(cond):
     
 
     # Evolve & animate
-    HE.animateEvolution2D_V2(H, psi0, 100, 1, n**2)
+    HE.animateEvolution2D_V2(H, psi0, t, dt, n**2)
     
     
 simulation2D('Neumann')
