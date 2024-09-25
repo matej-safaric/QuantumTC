@@ -181,7 +181,64 @@ def animateEvolution_V2(H, psi0, tmax, dt):
     plt.show()
 
 
+def animateEvolution2D(H, psi0, tmax, dt, n : int):
+    '''Animates the field of each vertex under the influence of
+    a Hamiltonian [H] and given the starting state [psi0]. The
+    discretization is dictated by the time step [dt] and the
+    total time [tmax].
+    
+    In this function we specify the number of vertices [n].'''
+    # Data preparation
+    a = int(np.sqrt(n)) # a is the number of vertices in one dimension
+    m = len(psi0) # m is the size of the initial state
+    ts = arange(0, tmax, dt) # Time steps
 
+    # Evolution
+    wavefunctions = []
+    wavefunctions.append(np.sqrt(psi0.probabilities()[:n]))
+    for i, t in enumerate(ts):
+        psi = evolveTime(H, t, psi0)
+        vals = np.sqrt(psi.probabilities()[:n])
+        wavefunctions.append(vals)
+        print(f'Evolution {i} of {len(ts)} completed.', end='\r')
+    print(wavefunctions)
+    print(colored('Evolutions completed. Plotting...', 'green'))
+           
+    # Plotting
+    global wave
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    # fig, ax = plt.subplots(subplot_kw=dict(projection='3d'))    
+    x = [i / (n-1) for i in range(a)]
+    y = [i / (n-1) for i in range(a)]
+    print(x, y)
+    x, y = np.meshgrid(x, y)
+    
+    # Convert the wavefunctions to a 2D array
+    wavefunctionsFIXED = []
+    for wave in wavefunctions:
+        wave = np.array(wave).reshape((a, a))
+        wavefunctionsFIXED.append(wave)
+        
+    print(wavefunctionsFIXED[0])
+    
+    wave = [ax.plot_surface(x, y, wavefunctionsFIXED[0], color='b')]
+    #ax.set(xlim=[0, 1], ylim=[-1, 1], xlabel='Position', ylabel='Amplitude')
+        
+    def update(frame, wave, wavefunctionsFIXED):
+        z = wavefunctionsFIXED[frame]
+        #print(wave)
+        wave[0].remove()
+        wave[0] = ax.plot_surface(x, y, z, color='b')
+        return wave
+    
+    ax.set_zlim(0, 0.5)
+    anime = animation.FuncAnimation(fig=fig, func=update, fargs=(wave, wavefunctionsFIXED),frames=(len(ts) - 1), interval=150)
+    plt.show()
+
+# Example usage
+def example123():
+    pass
 
 
 #==============================================================================#
