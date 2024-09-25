@@ -242,6 +242,74 @@ def example123():
     pass
 
 
+
+def animateEvolution2D_V2(H, psi0, tmax, dt, n : int):
+    '''Animates the field of each vertex under the influence of
+    a Hamiltonian [H] and given the starting state [psi0]. The
+    discretization is dictated by the time step [dt] and the
+    total time [tmax].
+    
+    In this function we specify the number of vertices [n].'''
+    # Data preparation
+    a = int(np.sqrt(n)) # a is the number of vertices in one dimension
+    m = len(psi0) # m is the size of the initial state
+    ts = arange(0, tmax, dt) # Time steps
+
+    # Evolution
+    wavefunctionsR = []
+    wavefunctionsI = []
+    wavefunctionsR.append(np.real(psi0.data[:n]))
+    wavefunctionsI.append(np.imag(psi0.data[:n]))
+    for i, t in enumerate(ts):
+        psi = evolveTime(H, t, psi0)
+        # vals = np.sqrt(psi.probabilities()[:n])
+        wavefunctionsR.append(np.real(psi.data[:n]))
+        wavefunctionsI.append(np.imag(psi.data[:n]))
+        print(f'Evolution {i} of {len(ts)} completed.', end='\r')
+    print(colored('Evolutions completed. Plotting...', 'green'))
+           
+    # Plotting
+    fig = plt.figure(figsize=(10, 10))
+    ax1 = fig.add_subplot(211, projection='3d')
+    ax2 = fig.add_subplot(212, projection='3d')
+    # axs = plt.subplots(2, 1, sharex=True, projection='3d')
+    # fig, axs = plt.subplots(2, 1, sharex=True)
+    x = [i / (n-1) for i in range(a)]
+    y = [i / (n-1) for i in range(a)]
+    
+    x,y = np.meshgrid(x, y)
+    
+    # Convert the wavefunctions to a 2D array
+    wavefunctionsR_FIXED, wavefunctionsI_FIXED = [], []
+    for waveR in wavefunctionsR:
+        wave = np.array(waveR).reshape((a, a))
+        wavefunctionsR_FIXED.append(wave)
+    for waveI in wavefunctionsI:
+        wave = np.array(waveI).reshape((a, a))
+        wavefunctionsI_FIXED.append(wave)
+
+    waveR = [ax1.plot_surface(x, y, wavefunctionsR_FIXED[0])]
+    waveI = [ax2.plot_surface(x, y, wavefunctionsI_FIXED[0])]
+    #axs[0].set(xlim=[0, 1], ylim=[-1, 1], xlabel='Position', ylabel='Real Amplitude')
+    #axs[1].set(xlim=[0, 1], ylim=[-1, 1], xlabel='Position', ylabel='Imaginary Amplitude')
+        
+    def update(frame, waveR, waveI, wavefunctionsR_FIXED, wavefunctionsI_FIXED):
+        z1 = wavefunctionsR_FIXED[frame]
+        z2 = wavefunctionsI_FIXED[frame]
+        waveR[0].remove()
+        waveI[0].remove()
+        waveR[0] = ax1.plot_surface(x, y, z1, color='b')
+        waveI[0] = ax2.plot_surface(x, y, z2, color='r')
+        return [waveR, waveI]
+    
+    ax1.set_zlim(-0.5, 0.5)
+    ax2.set_zlim(-0.5, 0.5)
+    
+    anime = animation.FuncAnimation(fig=fig, func=update, fargs=(waveR, waveI, wavefunctionsR_FIXED, wavefunctionsI_FIXED), frames=(len(ts) - 1), interval=1)
+    plt.show()
+
+
+
 #==============================================================================#
 # INITIAL CONDITIONS
 
