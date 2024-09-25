@@ -225,9 +225,9 @@ def initial_condition_gaussian2D(n : int, var, cond='Neumann'):
     elements represent the edges (with a zero starting state). The parameter [var]
     dictates the spread of the distribution.'''
     out = []
-    grid = [[(i + 1, j + 1) for j in range(n)] for i in range(n)]
+    grid = [(i + 1, j + 1) for j in range(n) for i in range(n)]
     for (i,j) in grid:
-        out.append(gaussian2D(i, j, n ** 2 // 2, n ** 2 // 2, var))
+        out.append(gaussian2D(i, j, n // 2, n // 2, var))
     if cond == 'Neumann':
         for i in range(2 * n ** 2 - 2 * n):
             out.append(0)
