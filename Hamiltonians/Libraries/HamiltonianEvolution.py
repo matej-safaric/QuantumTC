@@ -202,7 +202,6 @@ def animateEvolution2D(H, psi0, tmax, dt, n : int):
         vals = np.sqrt(psi.probabilities()[:n])
         wavefunctions.append(vals)
         print(f'Evolution {i} of {len(ts)} completed.', end='\r')
-    print(wavefunctions)
     print(colored('Evolutions completed. Plotting...', 'green'))
            
     # Plotting
@@ -212,7 +211,6 @@ def animateEvolution2D(H, psi0, tmax, dt, n : int):
     # fig, ax = plt.subplots(subplot_kw=dict(projection='3d'))    
     x = [i / (n-1) for i in range(a)]
     y = [i / (n-1) for i in range(a)]
-    print(x, y)
     x, y = np.meshgrid(x, y)
     
     # Convert the wavefunctions to a 2D array
@@ -221,7 +219,6 @@ def animateEvolution2D(H, psi0, tmax, dt, n : int):
         wave = np.array(wave).reshape((a, a))
         wavefunctionsFIXED.append(wave)
         
-    print(wavefunctionsFIXED[0])
     
     wave = [ax.plot_surface(x, y, wavefunctionsFIXED[0], color='b')]
     #ax.set(xlim=[0, 1], ylim=[-1, 1], xlabel='Position', ylabel='Amplitude')
@@ -234,7 +231,7 @@ def animateEvolution2D(H, psi0, tmax, dt, n : int):
         return wave
     
     ax.set_zlim(0, 0.5)
-    anime = animation.FuncAnimation(fig=fig, func=update, fargs=(wave, wavefunctionsFIXED),frames=(len(ts) - 1), interval=150)
+    anime = animation.FuncAnimation(fig=fig, func=update, fargs=(wave, wavefunctionsFIXED),frames=(len(ts) - 1), interval=250)
     plt.show()
 
 # Example usage
