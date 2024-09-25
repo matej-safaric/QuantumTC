@@ -1,9 +1,19 @@
 import numpy as np
 from termcolor import colored
+from Hamiltonians.Libraries import HamiltonianEvolution as HE
+
 
 #==============================================================================#
-# GRID FUNCTIONS
+#                             GLOBAL VARIABLES                                 #
+#------------------------------------------------------------------------------#
+
+n = 5
+var = 1
+
 #==============================================================================#
+#                              GRID FUNCTIONS                                  #
+#------------------------------------------------------------------------------#
+
 def grid(n : int):
     '''Returns a square grid of n ** 2 points.'''
     out = n * []
@@ -90,12 +100,10 @@ def B_Neumann(n : int):
 
 print(B_Dirichlet(2))
 
-# TODO: Sort out the order of the points in the grid.
+#==============================================================================#
+#                           SIMULATION FUNCTIONS                               #
+#------------------------------------------------------------------------------#
 
-from Hamiltonians.Libraries import HamiltonianEvolution as HE
-
-n = 3
-var = 1
 
 def simulation2D(cond):
     '''Given a specified boundary condition, the function simulates the 
@@ -125,4 +133,7 @@ def simulation2D(cond):
     
 
     # Evolve & animate
-    HE.animateEvolution2D_V2(H, psi0, 1000, 10, n**2)
+    HE.animateEvolution2D_V2(H, psi0, 100, 1, n**2)
+    
+    
+simulation2D('Neumann')

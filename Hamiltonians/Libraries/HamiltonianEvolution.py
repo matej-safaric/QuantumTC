@@ -16,6 +16,18 @@ from termcolor import colored
 from math import ceil
 
 #==============================================================================#
+# GLOBAL VARIABLES
+
+fps = 30
+
+
+
+
+
+
+
+
+#==============================================================================#
 # THE BASICS
 
 def hamiltonian(A, t0):
@@ -145,7 +157,7 @@ def animateEvolution(H, psi0, tmax, dt):
         wave.set_data(x, y)
         return wave
     
-    anime = animation.FuncAnimation(fig=fig, func=update, frames=(len(ts) - 1), interval=1)
+    anime = animation.FuncAnimation(fig=fig, func=update, frames=(len(ts) - 1), interval=1000 // fps)
     plt.show()
 
 
@@ -194,7 +206,7 @@ def animateEvolution_V2(H, psi0, tmax, dt):
         waveI.set_data(x, yI)
         return [waveR, waveI]
     
-    anime = animation.FuncAnimation(fig=fig, func=update, frames=(len(ts) - 1), interval=1)
+    anime = animation.FuncAnimation(fig=fig, func=update, frames=(len(ts) - 1), interval=1000 // fps)
     plt.show()
 
 
@@ -265,7 +277,7 @@ def animateEvolution2D(H, psi0, tmax, dt, n : int):
         return wave
     
     ax.set_zlim(0, 0.5)
-    anime = animation.FuncAnimation(fig=fig, func=update, fargs=(wave, wavefunctionsFIXED),frames=(len(ts) - 1), interval=250)
+    anime = animation.FuncAnimation(fig=fig, func=update, fargs=(wave, wavefunctionsFIXED),frames=(len(ts) - 1), interval=1000 // fps)
     plt.show()
 
 # Example usage
@@ -341,7 +353,7 @@ def animateEvolution2D_V2(H, psi0, tmax, dt, n : int):
         waveI[0] = ax2.plot_surface(x, y, z2, color='r')
         return [waveR, waveI]
     
-    anime = animation.FuncAnimation(fig=fig, func=update, fargs=(waveR, waveI, wavefunctionsR_FIXED, wavefunctionsI_FIXED), frames=(len(ts) - 1), interval=1)
+    anime = animation.FuncAnimation(fig=fig, func=update, fargs=(waveR, waveI, wavefunctionsR_FIXED, wavefunctionsI_FIXED), frames=(len(ts) - 1), interval=1000 // fps)
     plt.show()
 
 
