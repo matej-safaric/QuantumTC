@@ -92,32 +92,37 @@ print(B_Dirichlet(2))
 
 # TODO: Sort out the order of the points in the grid.
 
-# Hamiltonian setup
 from Hamiltonians.Libraries import HamiltonianEvolution as HE
 
 n = 3
 var = 1
 
-print(colored('Setting up Hamiltonian...', 'blue'), end='\r')
+def simulation2D(cond):
+    '''Given a specified boundary condition, the function simulates the 
+    2D wave equation.'''
+    
+    # Setting up Hamiltonian
+    print(colored('Setting up Hamiltonian...', 'blue'), end='\r')
+    if cond == 'Neumann':
+        H = HE.BHamiltonian2D(n, B_Neumann(n), 'Neumann')
+    else:
+        H = HE.BHamiltonian2D(n, B_Dirichlet(n), 'Dirichlet')
 
-H = HE.BHamiltonian2D(n, B_Dirichlet(n), 'Dirichlet')
-
-print(colored('Hamiltonian set up...\n', 'green'))
-print(colored('The Hamiltonian is:', 'light_blue'))
-print(colored(f'{H}\n', 'light_blue'))
+    print(colored('Hamiltonian set up...    \n', 'green'))
+    print(colored('The Hamiltonian is:', 'light_blue'))
+    print(colored(f'{H}\n', 'light_blue'))
 
 
-# Initial state
-print(colored('Setting up initial condition...', 'blue'), end='\r')
+    # Initial state
+    print(colored('Setting up initial condition...', 'blue'), end='\r')
 
-init = HE.initial_condition_gaussian2D(n, var, 'Dirichlet')
-psi0 = HE.Statevector(init / HE.euclidean_norm(init))
+    init = HE.initial_condition_gaussian2D(n, var, 'Dirichlet' if cond == 'Dirichlet' else 'Neumann')
+    psi0 = HE.Statevector(init / HE.euclidean_norm(init))
 
-print(colored('Initial condition set up...', 'green'))
-print(colored('The initial condition is:', 'light_blue'))
-print(colored(f'{psi0}\n', 'light_blue'))
+    print(colored('Initial condition set up...', 'green'))
+    print(colored('The initial condition is:', 'light_blue'))
+    print(colored(f'{psi0}\n', 'light_blue'))
+    
 
-# Evolve
-print(colored('Evolving...', 'light_blue'))
-# Animation
-HE.animateEvolution2D_V2(H, psi0, 1000, 10, n**2)
+    # Evolve & animate
+    HE.animateEvolution2D_V2(H, psi0, 1000, 10, n**2)
