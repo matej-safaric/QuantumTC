@@ -1,4 +1,5 @@
 import numpy as np
+from termcolor import colored
 
 #==============================================================================#
 # GRID FUNCTIONS
@@ -95,5 +96,28 @@ print(B_Dirichlet(2))
 from Hamiltonians.Libraries import HamiltonianEvolution as HE
 
 n = 3
+var = 1
+
+print(colored('Setting up Hamiltonian...', 'blue'), end='\r')
+
 H = HE.BHamiltonian2D(n, B_Dirichlet(n), 'Dirichlet')
-print(H)
+
+print(colored('Hamiltonian set up...\n', 'green'))
+print(colored('The Hamiltonian is:', 'light_blue'))
+print(colored(f'{H}\n', 'light_blue'))
+
+
+# Initial state
+print(colored('Setting up initial condition...', 'blue'), end='\r')
+
+init = HE.initial_condition_gaussian2D(n, var, 'Dirichlet')
+psi0 = HE.Statevector(init / HE.euclidean_norm(init))
+
+print(colored('Initial condition set up...', 'green'))
+print(colored('The initial condition is:', 'light_blue'))
+print(colored(f'{psi0}\n', 'light_blue'))
+
+# Evolve
+print(colored('Evolving...', 'light_blue'))
+# Animation
+HE.animateEvolution2D_V2(H, psi0, 1000, 10, n**2)
