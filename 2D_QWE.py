@@ -7,9 +7,9 @@ from Hamiltonians.Libraries import HamiltonianEvolution as HE
 #                             GLOBAL VARIABLES                                 #
 #------------------------------------------------------------------------------#
 
-n = 9
-var = 2
-t = 100
+n = 3
+var = 1
+t = 1000
 dt = 1
 
 #==============================================================================#
@@ -136,4 +136,4 @@ def simulation2D(cond):
     HE.animateEvolution2D_V2(H, psi0, t, dt, n**2)
     
     
-simulation2D('Neumann')
+simulation2D('Dirichlet')
