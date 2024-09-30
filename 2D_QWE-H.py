@@ -17,14 +17,14 @@ dt = 1
 
 def hexGrid(n : int):
     '''Returns a grid of n ** 2 points. We imagine the grid as a hexagonal
-    lattice of the form
-                                 0 - 1 - 2 - ...
-                                / \ / \ / \ 
-                               3 - 4 - 5 - ...
-                                \ / \ / \ /
-                                 6 - 7 - 8 - ...
-                                / \ / \ / \ 
-                                    ...                                 '''
+    lattice of the form in the example below.'''
+    #                             0 - 1 - 2 - ...
+    #                            / \ / \ / \ 
+    #                           3 - 4 - 5 - ...
+    #                            \ / \ / \ /
+    #                             6 - 7 - 8 - ...
+    #                            / \ / \ / \ 
+    #                                ...                                 
     out = n * []
     for i in range(n):
         out.append(n * [])
@@ -58,3 +58,140 @@ def edges(grid, cond = 'Neumann'):
                     out.append((grid[i][j], grid[i + 1][j]))    
         return out
 
+
+
+
+#==============================================================================#
+#                               MATRIX FUNCTIONS                               #
+#------------------------------------------------------------------------------#
+
+def D(n : int, cond='Neumann'):
+    '''Returns the out-degree matrix of the grid.'''
+    out = np.zeros((n ** 2, n ** 2), dtype=int)
+    if cond == 'Neumann':
+        for i in range(n ** 2):
+            if (i + 1) % (2 * n) == 0 or (i + 1) % (2 * n) == 1:
+                out[i][i] = 5 
+            else:
+                out[i][i] = 6
+    elif cond == 'Dirichlet':
+        raise NotImplementedError
+    return out
+
+
+
+def edgeTemplate(vertex, n : int, cond = 'Neumann'):
+    '''Returns the edges going out of the vertex according to one of 
+    the possible templates, depending on the position of the vertex.
+    
+    An edge is of the form ((vertex1, vertex2), weight).
+    
+    The size of the grid is n x n, where n is an ODD INTEGER.'''
+    # TODO: PLEASE FOR GOD'S SAKE, MAKE THIS FUNCTION MORE EFFICIENT.
+    
+    if cond == 'Neumann':
+        if n % 2 != 1:
+            raise ValueError('The size of the grid must be an odd integer.')
+        i, j = vertex
+        # Top vertices and bottom vertices:
+        if i == 0:
+            if j in range(1, n - 1):
+                return [((vertex, (i, j - 1)), 1),
+                        ((vertex, (i + 1, j)), 2),
+                        ((vertex, (i + 1, j + 1)), 2),
+                        ((vertex, (i, j + 1)), 1)]
+            elif j == 0:
+                return [((vertex, (i, j + 1)), 1),
+                        ((vertex, (i + 1, j)), 2),
+                        ((vertex, (i + 1, j + 1)), 2)]
+            elif j == n - 1:
+                return [((vertex, (i, j - 1)), 2),
+                        ((vertex, (i + 1, j)), 4)]
+        elif i == n - 1:
+            if j in range(1, n - 1):
+                return [((vertex, (i, j - 1)), 1),
+                        ((vertex, (i - 1, j)), 2),
+                        ((vertex, (i - 1, j + 1)), 2),
+                        ((vertex, (i, j + 1)), 1)]
+            elif j == 0:
+                return [((vertex, (i - 1, j)), 2),
+                        ((vertex, (i - 1, j + 1)), 2),
+                        ((vertex, (i, j + 1)), 1)]
+            elif j == n - 1:
+                return [((vertex, (i, j - 1)), 2),
+                        ((vertex, (i - 1, j)), 4)]
+                
+        # Middle vertices:
+        elif i in range(1, n - 1):
+            if i % 2 == 1: # Even row (i starts at 0)
+                if j in range(1, n - 1):
+                    return [((vertex, (i, j - 1)), 1),
+                            ((vertex, (i + 1, j - 1)), 1),
+                            ((vertex, (i + 1, j)), 1),
+                            ((vertex, (i, j + 1)), 1),
+                            ((vertex, (i - 1, j)), 1),
+                            ((vertex, (i - 1, j - 1)), 1)]
+                elif j == 0:
+                    return [((vertex, (i - 1, j)), 2),
+                            ((vertex, (i, j + 1)), 2),
+                            ((vertex, (i + 1, j)), 2)]
+                elif j == n - 1:
+                    return [((vertex, (i - 1, j)), 1),
+                            ((vertex, (i - 1, j - 1)), 1),
+                            ((vertex, (i, j - 1)), 1),
+                            ((vertex, (i + 1, j - 1)), 1),
+                            ((vertex, (i + 1, j)), 1)]
+            elif i % 2 == 0: # Odd row
+                if j in range(1, n - 1):
+                    return [((vertex, (i, j - 1)), 1),
+                            ((vertex, (i + 1, j - 1)), 1),
+                            ((vertex, (i + 1, j)), 1),
+                            ((vertex, (i, j + 1)), 1),
+                            ((vertex, (i - 1, j)), 1),
+                            ((vertex, (i - 1, j - 1)), 1)]
+                elif j == n - 1:
+                    return [((vertex, (i - 1, j)), 2),
+                            ((vertex, (i, j - 1)), 2),
+                            ((vertex, (i + 1, j)), 2)]
+                elif j == 0:
+                    return [((vertex, (i - 1, j)), 1),
+                            ((vertex, (i - 1, j + 1)), 1),
+                            ((vertex, (i, j - 1)), 1),
+                            ((vertex, (i + 1, j + 1)), 1),
+                            ((vertex, (i + 1, j)), 1)]
+        # If none of the conditions are fulfilled, raise an error.
+        raise ValueError('The vertex is not in the grid.') 
+    elif cond == 'Dirichlet':
+        raise NotImplementedError
+    
+    
+# So far so good :)
+
+def A(n : int, cond='Neumann'):
+    '''Returns the adjacency matrix of the grid.'''
+    out = np.zeros((n ** 2, n ** 2), dtype=int)
+    vertices = [(i, j) for i in range(n) for j in range(n)]
+    if cond == 'Neumann':
+        for vertex in vertices:
+            # print('#================================#')
+            # print('Vertex: ', vertex, '\n', 'Edges: ')
+            for edge in edgeTemplate(vertex, n):
+                print(edge)
+                out[vertices.index(vertex)][vertices.index(edge[0][1])] = edge[1]
+    # print('#================================#')
+    return out
+    
+def LaplacianSim(n : int, cond='Neumann'):
+    '''Returns the simmetrised Laplacian matrix of the grid
+    using the formula 
+            L[i, j] = D[i, j] - sqrt(A[i, j] * A[j, i]) '''
+    return D(n, cond) - np.sqrt(A(n, cond) * A(n, cond).T)
+
+
+def B(n : int, cond='Neumann'):
+    '''Returns the factorisation of L into the product
+    of two matrices, B and B^H.'''
+    adjM = A(n, cond)
+    if cond == 'Neumann':
+        out = np.zeros((n ** 2, 3 * n ** 2 - 4 * n + 1), dtype=int)
+        
