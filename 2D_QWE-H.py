@@ -12,6 +12,18 @@ t = 1000
 dt = 1
 
 #==============================================================================#
+#                              OTHER FUNCTIONS                                 #
+#------------------------------------------------------------------------------#
+
+def isGreater(vertex1, vertex2):
+    '''Returns True if vertex1 is greater than vertex2, and False otherwise.'''
+    if vertex1[0] > vertex2[0]:
+        return True
+    elif vertex1[0] == vertex2[0] and vertex1[1] > vertex2[1]:
+        return True
+    return False
+
+#==============================================================================#
 #                              GRID FUNCTIONS                                  #
 #------------------------------------------------------------------------------#
 
@@ -85,6 +97,8 @@ def edgeTemplate(vertex, n : int, cond = 'Neumann'):
     the possible templates, depending on the position of the vertex.
     
     An edge is of the form ((vertex1, vertex2), weight).
+    Edges going out of a given vertex are added in a counter-clockwise 
+    fashion starting with the edge going to the left of the vertex.
     
     The size of the grid is n x n, where n is an ODD INTEGER.'''
     # TODO: PLEASE FOR GOD'S SAKE, MAKE THIS FUNCTION MORE EFFICIENT.
@@ -101,22 +115,22 @@ def edgeTemplate(vertex, n : int, cond = 'Neumann'):
                         ((vertex, (i + 1, j + 1)), 2),
                         ((vertex, (i, j + 1)), 1)]
             elif j == 0:
-                return [((vertex, (i, j + 1)), 1),
-                        ((vertex, (i + 1, j)), 2),
-                        ((vertex, (i + 1, j + 1)), 2)]
+                return [((vertex, (i + 1, j)), 2),
+                        ((vertex, (i + 1, j + 1)), 2),
+                        ((vertex, (i, j + 1)), 1)]
             elif j == n - 1:
                 return [((vertex, (i, j - 1)), 2),
                         ((vertex, (i + 1, j)), 4)]
         elif i == n - 1:
             if j in range(1, n - 1):
                 return [((vertex, (i, j - 1)), 1),
-                        ((vertex, (i - 1, j)), 2),
+                        ((vertex, (i, j + 1)), 1),
                         ((vertex, (i - 1, j + 1)), 2),
-                        ((vertex, (i, j + 1)), 1)]
+                        ((vertex, (i - 1, j)), 2)]
             elif j == 0:
-                return [((vertex, (i - 1, j)), 2),
+                return [((vertex, (i, j + 1)), 1),
                         ((vertex, (i - 1, j + 1)), 2),
-                        ((vertex, (i, j + 1)), 1)]
+                        ((vertex, (i - 1, j)), 2)]
             elif j == n - 1:
                 return [((vertex, (i, j - 1)), 2),
                         ((vertex, (i - 1, j)), 4)]
@@ -132,15 +146,15 @@ def edgeTemplate(vertex, n : int, cond = 'Neumann'):
                             ((vertex, (i - 1, j)), 1),
                             ((vertex, (i - 1, j - 1)), 1)]
                 elif j == 0:
-                    return [((vertex, (i - 1, j)), 2),
+                    return [((vertex, (i + 1, j)), 2),
                             ((vertex, (i, j + 1)), 2),
-                            ((vertex, (i + 1, j)), 2)]
+                            ((vertex, (i - 1, j)), 2)]
                 elif j == n - 1:
-                    return [((vertex, (i - 1, j)), 1),
-                            ((vertex, (i - 1, j - 1)), 1),
-                            ((vertex, (i, j - 1)), 1),
+                    return [((vertex, (i, j - 1)), 1),
                             ((vertex, (i + 1, j - 1)), 1),
-                            ((vertex, (i + 1, j)), 1)]
+                            ((vertex, (i + 1, j)), 1),
+                            ((vertex, (i - 1, j)), 1),
+                            ((vertex, (i - 1, j - 1)), 1)]
             elif i % 2 == 0: # Odd row
                 if j in range(1, n - 1):
                     return [((vertex, (i, j - 1)), 1),
@@ -150,15 +164,15 @@ def edgeTemplate(vertex, n : int, cond = 'Neumann'):
                             ((vertex, (i - 1, j)), 1),
                             ((vertex, (i - 1, j - 1)), 1)]
                 elif j == n - 1:
-                    return [((vertex, (i - 1, j)), 2),
-                            ((vertex, (i, j - 1)), 2),
-                            ((vertex, (i + 1, j)), 2)]
+                    return [((vertex, (i, j - 1)), 2),
+                            ((vertex, (i + 1, j)), 2),
+                            ((vertex, (i - 1, j)), 2)]
                 elif j == 0:
-                    return [((vertex, (i - 1, j)), 1),
-                            ((vertex, (i - 1, j + 1)), 1),
-                            ((vertex, (i, j - 1)), 1),
+                    return [((vertex, (i + 1, j)), 1),
                             ((vertex, (i + 1, j + 1)), 1),
-                            ((vertex, (i + 1, j)), 1)]
+                            ((vertex, (i, j + 1)), 1),
+                            ((vertex, (i - 1, j + 1)), 1),
+                            ((vertex, (i - 1, j)), 1)]
         # If none of the conditions are fulfilled, raise an error.
         raise ValueError('The vertex is not in the grid.') 
     elif cond == 'Dirichlet':
@@ -176,7 +190,7 @@ def A(n : int, cond='Neumann'):
             # print('#================================#')
             # print('Vertex: ', vertex, '\n', 'Edges: ')
             for edge in edgeTemplate(vertex, n):
-                print(edge)
+                # print(edge)
                 out[vertices.index(vertex)][vertices.index(edge[0][1])] = edge[1]
     # print('#================================#')
     return out
@@ -191,7 +205,21 @@ def LaplacianSim(n : int, cond='Neumann'):
 def B(n : int, cond='Neumann'):
     '''Returns the factorisation of L into the product
     of two matrices, B and B^H.'''
+    vertices = [(i, j) for i in range(n) for j in range(n)]
     adjM = A(n, cond)
+    edges = []
     if cond == 'Neumann':
         out = np.zeros((n ** 2, 3 * n ** 2 - 4 * n + 1), dtype=int)
+        for vertex in vertices:
+            for edge in edgeTemplate(vertex, n):
+                edges.append(edge)
+        # Right now the edges list is too big for our purposes.
+        # Let's count the amount of undirected edges (hence not
+        # taking into account the direction of the edges)
+        m = len(edges) // 2
+    raise NotImplementedError
         
+        
+
+print(A(3), '\n')
+print(B(3))
