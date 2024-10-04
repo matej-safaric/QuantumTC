@@ -1,6 +1,7 @@
 import numpy as np
 from termcolor import colored
 from Hamiltonians.Libraries import HamiltonianEvolution as HE
+from matplotlib import pyplot as plt
 
 #==============================================================================#
 #                             GLOBAL VARIABLES                                 #
@@ -265,3 +266,50 @@ def B(n : int, cond='Neumann'):
 #
 # The first step is to define the hexagonal grid:
 
+def hexGridEuclidean(n : int, a : float, cond='Neumann'):
+    '''Returns a grid of [n] ** 2 points in the Euclidean plane. We imagine the
+    grid as a hexagonal lattice with spacing between the vertices being [a].'''
+    out = []
+    if cond == 'Neumann':
+        l = [a/2 + i * a for i in range(n)]
+        for i in range(n):
+            if i % 2 == 0:
+                out.append([(a/2 + j * a, a * np.sqrt(3) * i / 2) for j in range(n)])
+            else:
+                out.append([(j * a, a * np.sqrt(3) * (i) / 2) for j in range(n)])
+        out.reverse()
+    elif cond == 'Dirichlet':
+        raise NotImplementedError
+    return out
+
+
+
+# x = []
+# y = []
+# for i in hexGridEuclidean(3, 1):
+#     for j in i:
+#         x.append(j[0])
+#         y.append(j[1])
+# fig = plt.figure()
+# plt.scatter(x, y)
+# plt.show()
+
+
+
+def initialGaussian(n : int, a : float, var, cond='Neumann'):
+    '''Returns the initial condition of the Gaussian pulse on the hexagonal grid.
+    The pulse is centered at the central point in the grid.'''
+    out = []
+    grid = hexGridEuclidean(n, a, cond)
+    mu = (np.ceil(n/2), np.ceil(n/2))
+    for row in range(grid):
+        for vert in row:
+            out.append(HE.gaussian2D(vert[0], vert[1], mu, mu, var))
+            
+def initialFix(init,, cond='Neumann'):
+    '''Given the initial condition state, the function returns a corrected 
+    initial state taking into account the correction factors for the 
+    boundary vertices.'''
+    if cond == 'Neumann':
+        pass
+    
