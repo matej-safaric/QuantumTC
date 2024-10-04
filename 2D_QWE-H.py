@@ -209,17 +209,59 @@ def B(n : int, cond='Neumann'):
     adjM = A(n, cond)
     edges = []
     if cond == 'Neumann':
-        out = np.zeros((n ** 2, 3 * n ** 2 - 4 * n + 1), dtype=int)
-        for vertex in vertices:
-            for edge in edgeTemplate(vertex, n):
-                edges.append(edge)
-        # Right now the edges list is too big for our purposes.
-        # Let's count the amount of undirected edges (hence not
-        # taking into account the direction of the edges)
-        m = len(edges) // 2
-    raise NotImplementedError
-        
+        out = np.zeros((n ** 2, 3 * n ** 2 - 4 * n + 1), dtype=float)
+    elif cond == 'Dirichlet':
+        raise NotImplementedError
+    
+    # Getting the list of all directed edges
+    for vertex in vertices:
+        for edge in edgeTemplate(vertex, n):
+            edges.append(edge)
+            
+    # Getting the list of all undirected edges 
+    edgesUndirected = []
+    for e in edges:
+        if e in edgesUndirected or (e[0][1], e[0][0]) in edgesUndirected:
+            continue
+        else:
+            edgesUndirected.append((e[0][0], e[0][1]))
+            
+    # Filling the matrix B
+    for k, e in enumerate(edgesUndirected):
+        print('#================================#')
+        # print('k: ', k)
+        (i, j) = e
+        # We have to transform i and j into the corresponding index in the vertices list
+        i, j = vertices.index(i), vertices.index(j)
+        print('Edge: ', e)
+        i, j = min(i, j), max(i, j)
+        print('Vertices: ', i, ',', j)
+        if i == j:
+            out[i][k] = np.sqrt(adjM[i][j])
+            print('Diagonal: ', adjM[i][j])
+        else:
+            out[i][k] = np.sqrt(adjM[i][j])
+            out[j][k] = -np.sqrt(adjM[j][i])
+            print('Off-diagonal: ', adjM[i][j], adjM[j][i])
+    print('#================================#')
+    return out        
         
 
-print(A(3), '\n')
-print(B(3))
+# print(A(3), '\n')
+# print(B(3), '\n')
+# print(LaplacianSim(3), '\n')
+
+
+
+
+
+
+#==============================================================================#
+#                             INITIAL CONDITIONS                               #
+#------------------------------------------------------------------------------#
+
+# We wish to use the Gaussian pulse as an initial condition for now. Later 
+# on, we will also implement the Richer wavelet.
+#
+# The first step is to define the hexagonal grid:
+
