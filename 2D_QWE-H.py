@@ -2,12 +2,16 @@ import numpy as np
 from termcolor import colored
 from Hamiltonians.Libraries import HamiltonianEvolution as HE
 from matplotlib import pyplot as plt
+from matplotlib import animation
+import time
+from qiskit import Statevector
 
 #==============================================================================#
 #                             GLOBAL VARIABLES                                 #
 #------------------------------------------------------------------------------#
 
 n = 3
+a = 1
 var = 1
 t = 1000
 dt = 1
@@ -247,6 +251,15 @@ def B(n : int, cond='Neumann'):
     print('#================================#')
     return out        
         
+def BHamiltonian2D_H(n : int, B, cond='Neumann'):
+    '''Given an integer [n] and matrix [B], the function returns the Hamiltonian matrix 
+    for a graph with [n ** 2] vertices and [2 * n ** 2 - 2 * n] edges, as dictated by the article.'''
+    if cond == 'Neumann':
+        H = np.block([[np.zeros((n ** 2, n ** 2)), B], [np.transpose(B), np.zeros((3 * n ** 2 - 4 * n + 1, 3 * n ** 2 - 4 * n + 1))]]) * np.sqrt(2 / 3) / a 
+    elif cond == 'Dirichlet':
+        # H = np.block([[np.zeros((n ** 2, n ** 2)), B], [np.transpose(B), np.zeros((2 * n ** 2 + 2 * n - 4, 2 * n ** 2 + 2 * n - 4))]]) / (n + 1)
+        raise NotImplementedError
+    return H
 
 # print(A(3), '\n')
 # print(B(3), '\n')
@@ -280,7 +293,7 @@ def hexGridEuclidean(n : int, a : float, cond='Neumann'):
         out.reverse()
     elif cond == 'Dirichlet':
         raise NotImplementedError
-    return out
+    return np.array(out)
 
 
 
@@ -301,15 +314,130 @@ def initialGaussian(n : int, a : float, var, cond='Neumann'):
     The pulse is centered at the central point in the grid.'''
     out = []
     grid = hexGridEuclidean(n, a, cond)
-    mu = (np.ceil(n/2), np.ceil(n/2))
-    for row in range(grid):
+    mux = grid[n // 2][n // 2][0]
+    muy = grid[n // 2][n // 2][1]
+    for i, row in enumerate((grid)):
+        out.append([])
         for vert in row:
-            out.append(HE.gaussian2D(vert[0], vert[1], mu, mu, var))
+            print(vert)
+            print(HE.gaussian2D(vert[0], vert[1], mux, muy, var))
+            out[i].append(HE.gaussian2D(vert[0], vert[1], mux, muy, var))
+            print(colored(out, 'light_green'), end='\n\n')
+    return np.array(out)
             
-def initialFix(init,, cond='Neumann'):
+            
+def initialFix(init, cond='Neumann'):
     '''Given the initial condition state, the function returns a corrected 
     initial state taking into account the correction factors for the 
     boundary vertices.'''
     if cond == 'Neumann':
-        pass
+        # The correction factors are 1/sqrt2 for the vertices on the boundary
+        for i in range(len(init)):
+            for j in range(len(init[i])):
+                if i in [0, len(init) - 1] or j in [0, len(init[i]) - 1]:
+                    init[i][j] /= np.sqrt(2)
+    elif cond == 'Dirichlet':
+        raise NotImplementedError 
+    return init
+
+def initialFix2(init, cond='Neumann'):
+    '''Given the corrected initial state, the function adds the values 
+    corresponding to the edge-values of the electric field. In the simplest 
+    case it adds zeros and vectorizes the grid.'''
+    n = len(init)
+    vec = init.flatten()
+    if cond == 'Neumann':
+        out = np.append(vec, np.zeros(3 * n ** 2 - 4 * n + 1))
+    elif cond == 'Dirichlet':
+        raise NotImplementedError
+    return out
+
+# Example:
+# init = initialGaussian(3, 1, 1)
+# print(init, '\n')
+# init2 = initialFix(init)
+# print(init2, '\n')
+# init3 = initialFix2(init2)
+# print(init3, '\n')
+
+
+        
+#==============================================================================#
+#                             MAIN FUNCTION                                    #
+#------------------------------------------------------------------------------#
+
+def main(n : int, a : float, var, t : int, dt : int, cond='Neumann'):
+    '''The main function that evolves the initial state according to the 
+    Hamiltonian dynamics.'''
+    # Initial condition:
+    init = initialFix2(initialFix(initialGaussian(n, a, var), cond), cond)
     
+    # Hamiltonian matrices:
+    L = LaplacianSim(n, cond)
+    Bmat = B(n, cond)
+    H = BHamiltonian2D_H(n, Bmat, cond)
+    # Evolution:
+    state = HE.evolve()
+    return state
+
+
+def animateEvolution2D(H, psi0, tmax, dt, n : int):
+    '''Animates the field of each vertex under the influence of
+    a Hamiltonian [H] and given the starting state [psi0]. The
+    discretization is dictated by the time step [dt] and the
+    total time [tmax].
+    
+    In this function we specify the number of vertices [n].'''
+    # Data preparation
+    m = len(psi0) # m is the size of the initial state
+    ts = np.arange(0, tmax, dt) # Time steps
+
+    # Evolution
+    wavefunctions = []
+    wavefunctions.append(np.sqrt(psi0.probabilities()[:n]))
+    for i, t in enumerate(ts):
+        psi = HE.evolveTime(H, t, psi0)
+        vals = np.sqrt(psi.probabilities()[:n])
+        wavefunctions.append(vals)
+        print(f'Evolution {i} of {len(ts)} completed.', end='\r')
+    print(colored('Evolutions completed. Plotting...', 'green'))
+           
+    # Plotting
+    global wave
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    # fig, ax = plt.subplots(subplot_kw=dict(projection='3d'))    
+    x = [i / (n-1) for i in range(a)]
+    y = [i / (n-1) for i in range(a)]
+    x, y = np.meshgrid(x, y)
+    
+    # Convert the wavefunctions to a 2D array
+    wavefunctionsFIXED = []
+    for wave in wavefunctions:
+        wave = np.array(wave).reshape((a, a))
+        wavefunctionsFIXED.append(wave)
+        
+    
+    wave = [ax.plot_surface(x, y, wavefunctionsFIXED[0], color='b')]
+    #ax.set(xlim=[0, 1], ylim=[-1, 1], xlabel='Position', ylabel='Amplitude')
+        
+    def update(frame, wave, wavefunctionsFIXED):
+        z = wavefunctionsFIXED[frame]
+        #print(wave)
+        wave[0].remove()
+        wave[0] = ax.plot_surface(x, y, z, color='b')
+        return wave
+    
+    ax.set_zlim(0, 0.5)
+    anime = animation.FuncAnimation(fig=fig, func=update, fargs=(wave, wavefunctionsFIXED),frames=(len(ts) - 1), interval=1000 // fps)
+    plt.show()
+
+
+# TODO:
+# 1. Implement the function above in a correct manner to accomodate the hexagonal grid.
+# 2. Test the function with a simple example.
+# 3. Examine the results and see if they are correct.
+# 4. Expand the function to include the Dirichlet boundary conditions.
+# 5. (Optional) Implement the Richer wavelet as an initial condition.
+# 6. (Optional) Implement the function to animate the evolution of the wavelet.
+# 7. (Long term) Implement the Dirichlet boundary conditions.
