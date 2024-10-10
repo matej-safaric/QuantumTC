@@ -163,11 +163,11 @@ def edgeTemplate(vertex, n : int, cond = 'Neumann'):
             elif i % 2 == 0: # Odd row
                 if j in range(1, n - 1):
                     return [((vertex, (i, j - 1)), 1),
-                            ((vertex, (i + 1, j - 1)), 1),
                             ((vertex, (i + 1, j)), 1),
+                            ((vertex, (i + 1, j + 1)), 1),
                             ((vertex, (i, j + 1)), 1),
-                            ((vertex, (i - 1, j)), 1),
-                            ((vertex, (i - 1, j - 1)), 1)]
+                            ((vertex, (i - 1, j + 1)), 1),
+                            ((vertex, (i - 1, j)), 1)]
                 elif j == n - 1:
                     return [((vertex, (i, j - 1)), 2),
                             ((vertex, (i + 1, j)), 2),
