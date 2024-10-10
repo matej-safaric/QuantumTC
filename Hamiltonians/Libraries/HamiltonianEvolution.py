@@ -445,6 +445,17 @@ def initial_condition_gaussian2D(n : int, var, cond='Neumann'):
     return out
     
     
+
+#------------------------------------------------------------------------------#
+# Implementation of the Richer wavelet
+
+def richer(x, mu, sigma):
+    return 1 / (sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((x - mu) / sigma) ** 2) * np.sin(2 * np.pi * x)
+
+def richer2D(x, y, mux, muy, sigma):
+    '''Implements the richer wavelet in 2D aka the Mexican hat wavelet. This function is also the second derivative of the Gaussian function.'''
+    return 1 / (np.pi * sigma ** 4) * (1 - ((x - mux) ** 2 + (y - muy) ** 2) / (2 * sigma ** 2)) * np.exp(-((x - mux) ** 2 + (y - muy) ** 2) / (2 * sigma ** 2))
+    
     
     
 #------------------------------------------------------------------------------#
