@@ -4,17 +4,18 @@ from Hamiltonians.Libraries import HamiltonianEvolution as HE
 from matplotlib import pyplot as plt
 from matplotlib import animation
 import time
-from qiskit import Statevector
+from qiskit.quantum_info import Statevector
 
 #==============================================================================#
 #                             GLOBAL VARIABLES                                 #
 #------------------------------------------------------------------------------#
 
-n = 3
+n = 11
 a = 1
-var = 1
-t = 1000
+var = 3
+t = 300
 dt = 1
+fps = 30
 
 #==============================================================================#
 #                              OTHER FUNCTIONS                                 #
@@ -225,22 +226,37 @@ def B(n : int, cond='Neumann'):
             
     # Getting the list of all undirected edges 
     edgesUndirected = []
+    c = 0
     for e in edges:
+        # print('Edge: ', e)
+        print(colored((f'The value of c is: ', c), 'blue'))
         if e in edgesUndirected or (e[0][1], e[0][0]) in edgesUndirected:
-            continue
+            print(f'Edge {e} already in the list.', '\n')
         else:
             edgesUndirected.append((e[0][0], e[0][1]))
+            print('Added edge: ', (e[0][0], e[0][1]), '\n')
+        c += 1
             
+    # Dupe check
+    for i, e in enumerate(edgesUndirected):
+        print(colored((f'Checking edge {e} of {len(edgesUndirected)}'), 'yellow'))
+        if e[0] == e[1]:
+            print('The edge list contains a self-loop.') 
+        if e in edgesUndirected[i + 1:] or (e[1], e[0]) in edgesUndirected[i + 1:]:
+            print('The edge list contains a duplicate.')
+    print(colored('dupe check done', 'yellow'))
+    
     # Filling the matrix B
+    print(colored(len(edgesUndirected), 'red'))
     for k, e in enumerate(edgesUndirected):
-        print('#================================#')
+        # print('#================================#')
         # print('k: ', k)
         (i, j) = e
         # We have to transform i and j into the corresponding index in the vertices list
         i, j = vertices.index(i), vertices.index(j)
-        print('Edge: ', e)
+        # print('Edge: ', e)
         i, j = min(i, j), max(i, j)
-        print('Vertices: ', i, ',', j)
+        # print('Vertices: ', i, ',', j)
         if i == j:
             out[i][k] = np.sqrt(adjM[i][j])
             print('Diagonal: ', adjM[i][j])
@@ -248,7 +264,7 @@ def B(n : int, cond='Neumann'):
             out[i][k] = np.sqrt(adjM[i][j])
             out[j][k] = -np.sqrt(adjM[j][i])
             print('Off-diagonal: ', adjM[i][j], adjM[j][i])
-    print('#================================#')
+    #print('#================================#')
     return out        
         
 def BHamiltonian2D_H(n : int, B, cond='Neumann'):
@@ -389,7 +405,7 @@ def animateEvolution2D(H, psi0, tmax, dt, n : int):
     
     In this function we specify the number of vertices [n].'''
     # Data preparation
-    m = len(psi0) # m is the size of the initial state
+    m = int(np.sqrt(n)) # m is the size of one side of the grid
     ts = np.arange(0, tmax, dt) # Time steps
 
     # Evolution
@@ -406,37 +422,66 @@ def animateEvolution2D(H, psi0, tmax, dt, n : int):
     global wave
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    # fig, ax = plt.subplots(subplot_kw=dict(projection='3d'))    
-    x = [i / (n-1) for i in range(a)]
-    y = [i / (n-1) for i in range(a)]
-    x, y = np.meshgrid(x, y)
+    # fig, ax = plt.subplots(subplot_kw=dict(projection='3d'))   
     
-    # Convert the wavefunctions to a 2D array
-    wavefunctionsFIXED = []
-    for wave in wavefunctions:
-        wave = np.array(wave).reshape((a, a))
-        wavefunctionsFIXED.append(wave)
-        
+    # This is where we need to change some stuff
+    # We need to create a 2D grid of points on a hex grid
+    # Let's take the grid we get from the function hexGridEuclidean
+    # and extract the x and y coordinates of the vertices. 
+    grid = hexGridEuclidean(m, a)
+    print(colored(grid, 'yellow'))
+    # Extraction of xs and ys
+    xs = []
+    ys = []
+    for row in grid:
+        for vert in row:
+            xs.append(vert[0])
+            ys.append(vert[1])
+    print(xs, ys)
     
-    wave = [ax.plot_surface(x, y, wavefunctionsFIXED[0], color='b')]
+    # Convert the wavefunctions to a 2D array (UNNECESSARY)
+    # wavefunctionsFIXED = []
+    # for wave in wavefunctions:
+    #     wave = np.array(wave).reshape((m, m))
+    #     print(colored(wave, 'light_blue'))
+    #     wavefunctionsFIXED.append(wave)
+    
+    print(colored((len(xs), len(ys), len(wavefunctions[0])), 'red'))
+    
+    wave = ax.plot_trisurf(xs, ys, wavefunctions[0], color='b')
     #ax.set(xlim=[0, 1], ylim=[-1, 1], xlabel='Position', ylabel='Amplitude')
         
-    def update(frame, wave, wavefunctionsFIXED):
-        z = wavefunctionsFIXED[frame]
-        #print(wave)
-        wave[0].remove()
-        wave[0] = ax.plot_surface(x, y, z, color='b')
+    def update(frame, wave, wavefunctions):
+        z = wavefunctions[frame]
+        #print(frame)
+        #print(colored(wave, 'light_green'))
+        plt.cla()
+        ax.set_zlim(0, 0.5)
+       # ax = fig.add_subplot(111, projection='3d')
+        wave = ax.plot_trisurf(xs, ys, z, color='b')
         return wave
     
-    ax.set_zlim(0, 0.5)
-    anime = animation.FuncAnimation(fig=fig, func=update, fargs=(wave, wavefunctionsFIXED),frames=(len(ts) - 1), interval=1000 // fps)
+    anime = animation.FuncAnimation(fig=fig, func=update, fargs=(wave, wavefunctions),frames=(len(ts) - 1), interval=1000 // fps)
     plt.show()
 
 
+
+# Example:
+#print(B(3))
+#print(B(5))
+H = BHamiltonian2D_H(n, B(n))
+
+# we still need to normalize the initial condition
+init = initialFix2(initialFix(initialGaussian(n, a, var)))
+psi0 = Statevector(init / HE.euclidean_norm(init))
+print(psi0.is_valid())
+
+animateEvolution2D(H, psi0, t, dt, n ** 2)
+
 # TODO:
-# 1. Implement the function above in a correct manner to accomodate the hexagonal grid.
-# 2. Test the function with a simple example.
-# 3. Examine the results and see if they are correct.
+# 1. Implement the function above in a correct manner to accomodate the hexagonal grid.     X
+# 2. Test the function with a simple example.                                               X
+# 3. Examine the results and see if they are correct.                                       ?
 # 4. Expand the function to include the Dirichlet boundary conditions.
 # 5. (Optional) Implement the Richer wavelet as an initial condition.
 # 6. (Optional) Implement the function to animate the evolution of the wavelet.
