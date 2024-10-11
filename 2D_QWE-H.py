@@ -12,7 +12,7 @@ from qiskit.quantum_info import Statevector
 #                             GLOBAL VARIABLES                                 #
 #------------------------------------------------------------------------------#
 
-n = 17
+n = 31
 a = 1 
 var = 4
 t = 30
@@ -496,13 +496,14 @@ def plotWavefunction2D_H(H, psi0, t, n : int):
     print(colored('Data extracted.', 'green'))
     wave = ax.plot_trisurf(xs, ys, wavefunction, cmap=mpl.colormaps['viridis'])
     plt.show()
+    return wavefunction
 
 H = BHamiltonian2D_H(n, B(n), 'Neumann')
 print(B(n))
 print(H)
 init = initialFix2(initialFix(initialRicher(n, a, var)))
 psi0 = Statevector(init / HE.euclidean_norm(init))
-plotWavefunction2D_H(H, psi0, 8, n)
+wave = plotWavefunction2D_H(H, psi0, 8, n)
 
 # TODO:
 # 1. (Long term) Implement the Dirichlet boundary conditions.
@@ -535,3 +536,24 @@ def peaks(wavefunction, n : int, eps : float):
     return out
 
 
+def anisotropy(wavefunction, n : int, eps : float):
+    '''Returns the anisotropy of the wavefunction at a given time [t]. The 
+    anisotropy is the ratio of the distance between the source and the 
+    farthest peak to the distance between the source and the nearest peak.'''
+    grid = hexGridEuclidean(n, a)
+    peaksList = peaks(wavefunction, n, eps)
+
+    source = grid[n // 2][n // 2]
+    print(source)
+    maxDist = 0
+    minDist = 10 ** 10
+    for peak in peaksList:
+        print(peak)
+        dist = np.sqrt((source[0] - grid[peak // n][peak % n][0]) ** 2 + (source[1] - grid[peak // n][peak % n][1]) ** 2)
+        if dist > maxDist:
+            maxDist = dist
+        if dist < minDist:
+            minDist = dist
+    return maxDist / minDist
+
+print(anisotropy(wave, n, 0.01))
