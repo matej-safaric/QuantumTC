@@ -7,10 +7,10 @@ from Hamiltonians.Libraries import HamiltonianEvolution as HE
 #                             GLOBAL VARIABLES                                 #
 #------------------------------------------------------------------------------#
 
-n = 3
+n = 21
 var = 1
 t = 1000
-dt = 1
+dt = 10
 
 #==============================================================================#
 #                              GRID FUNCTIONS                                  #
