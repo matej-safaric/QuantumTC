@@ -1,8 +1,10 @@
 import numpy as np
 from termcolor import colored
 from Hamiltonians.Libraries import HamiltonianEvolution as HE
+import matplotlib as mpl
 from matplotlib import pyplot as plt
 from matplotlib import animation
+from matplotlib import cm
 import time
 from qiskit.quantum_info import Statevector
 
@@ -10,11 +12,11 @@ from qiskit.quantum_info import Statevector
 #                             GLOBAL VARIABLES                                 #
 #------------------------------------------------------------------------------#
 
-n = 3
-a = 1
-var = 3
+n = 17
+a = 1 
+var = 4
 t = 30
-dt = 1
+dt = 0.1
 fps = 10
 
 #==============================================================================#
@@ -229,17 +231,18 @@ def B(n : int, cond='Neumann'):
     c = 0
     for e in edges:
         # print('Edge: ', e)
-        print(colored((f'The value of c is: ', c), 'blue'))
+        # print(colored((f'The value of c is: ', c), 'blue'))
         if e in edgesUndirected or (e[0][1], e[0][0]) in edgesUndirected:
-            print(f'Edge {e} already in the list.', '\n')
+            # print(f'Edge {e} already in the list.', '\n')
+            continue
         else:
             edgesUndirected.append((e[0][0], e[0][1]))
-            print('Added edge: ', (e[0][0], e[0][1]), '\n')
+            # print('Added edge: ', (e[0][0], e[0][1]), '\n')
         c += 1
             
     # Dupe check
     for i, e in enumerate(edgesUndirected):
-        print(colored((f'Checking edge {e} of {len(edgesUndirected)}'), 'yellow'))
+        # print(colored((f'Checking edge {e} of {len(edgesUndirected)}'), 'yellow'))
         if e[0] == e[1]:
             print('The edge list contains a self-loop.') 
         if e in edgesUndirected[i + 1:] or (e[1], e[0]) in edgesUndirected[i + 1:]:
@@ -259,11 +262,11 @@ def B(n : int, cond='Neumann'):
         # print('Vertices: ', i, ',', j)
         if i == j:
             out[i][k] = np.sqrt(adjM[i][j])
-            print('Diagonal: ', adjM[i][j])
+            # print('Diagonal: ', adjM[i][j])
         else:
             out[i][k] = np.sqrt(adjM[i][j])
             out[j][k] = -np.sqrt(adjM[j][i])
-            print('Off-diagonal: ', adjM[i][j], adjM[j][i])
+            # print('Off-diagonal: ', adjM[i][j], adjM[j][i])
     #print('#================================#')
     return out        
         
@@ -388,10 +391,10 @@ def animateEvolution2D_H(H, psi0, tmax, dt, n : int):
 
     # Evolution
     wavefunctions = []
-    wavefunctions.append(np.sqrt(psi0.probabilities()[:n]))
+    wavefunctions.append(np.real(psi0.data[:n]))
     for i, t in enumerate(ts):
         psi = HE.evolveTime(H, t, psi0)
-        vals = np.sqrt(psi.probabilities()[:n])
+        vals = np.real(psi.data[:n])
         wavefunctions.append(vals)
         print(f'Evolution {i} of {len(ts)} completed.', end='\r')
     print(colored('Evolutions completed. Plotting...', 'green'))
@@ -437,21 +440,98 @@ def animateEvolution2D_H(H, psi0, tmax, dt, n : int):
 
 
 
-# Example:
-H = BHamiltonian2D_H(n, B(n))
+# The function works as expected. The only thing that remains is to test it with a simple example.
+def simulation2D_H(cond):
+    '''Given a specified boundary condition, the function simulates the 
+    2D wave equation.'''
+    
+    # Setting up Hamiltonian
+    print(colored('Setting up Hamiltonian...', 'blue'), end='\r')
+    H = BHamiltonian2D_H(n, B(n, cond), cond)
 
-# we still need to normalize the initial condition
+    print(colored('Hamiltonian set up...    \n', 'green'))
+    print(colored('The Hamiltonian is:', 'light_blue'))
+    print(colored(f'{H}\n', 'light_blue'))
+
+
+    # Initial state
+    print(colored('Setting up initial condition...', 'blue'), end='\r')
+    if cond == 'Neumann':
+        init = initialFix2(initialFix(initialRicher(n, a, var)))
+    elif cond == 'Dirichlet':
+        raise NotImplementedError
+    psi0 = Statevector(init / HE.euclidean_norm(init))
+
+    print(colored('Initial condition set up...', 'green'))
+    print(colored('The initial condition is:', 'light_blue'))
+    print(colored(f'{psi0}\n', 'light_blue'))
+    
+
+    # Evolve & animate
+    animateEvolution2D_H(H, psi0, t, dt, n**2)
+
+# simulation2D_H('Neumann')
+
+
+def plotWavefunction2D_H(H, psi0, t, n : int):
+    '''Plots the wavefunction given by the Hamiltonian H 
+    at time t of the initial condition psi0.
+    The integer n ** 2 is the number of vertices.'''
+    print(colored('Evolving...', 'blue'), end='\r')
+    psi = HE.evolveTime(H, t, psi0)
+    print(psi)
+    print(colored('Evolution completed.', 'green'))
+    wavefunction = np.real(psi.data[:n**2])
+    fig = plt.figure(figsize=(8, 7))
+    ax = fig.add_subplot(111, projection='3d')
+    print(colored('Preparing grid...', 'blue'), end='\r')
+    grid = hexGridEuclidean(n, a)
+    print(colored('Grid prepared.    ', 'green'))
+    xs = []
+    ys = []
+    for row in grid:
+        for vert in row:
+            xs.append(vert[0])
+            ys.append(vert[1])
+    print(colored('Data extracted.', 'green'))
+    wave = ax.plot_trisurf(xs, ys, wavefunction, cmap=mpl.colormaps['viridis'])
+    plt.show()
+
+H = BHamiltonian2D_H(n, B(n), 'Neumann')
+print(B(n))
+print(H)
 init = initialFix2(initialFix(initialRicher(n, a, var)))
 psi0 = Statevector(init / HE.euclidean_norm(init))
-print(psi0.is_valid())
-
-animateEvolution2D_H(H, psi0, t, dt, n ** 2)
+plotWavefunction2D_H(H, psi0, 8, n)
 
 # TODO:
-# 1. Implement the function above in a correct manner to accomodate the hexagonal grid.     X
-# 2. Test the function with a simple example.                                               X
-# 3. Examine the results and see if they are correct.                                       ?
-# 4. Expand the function to include the Dirichlet boundary conditions.
-# 5. (Optional) Implement the Richer wavelet as an initial condition.
-# 6. (Optional) Implement the function to animate the evolution of the wavelet.
-# 7. (Long term) Implement the Dirichlet boundary conditions.
+# 1. (Long term) Implement the Dirichlet boundary conditions.
+# 2. Implement memoization for time evolution functions.            DIDNT WORK
+
+
+
+
+
+
+
+
+#==============================================================================#
+#                            ANISOTROPY ANALYSIS                               #
+#------------------------------------------------------------------------------#
+
+# To measure the anisotropy of our wave model, we are going to model the system 
+# at a specific time t and measure distance between the source and the points
+# in which the wave has peaked.
+
+def peaks(wavefunction, n : int, eps : float):
+    '''Returns the peaks of the wavefunction at a given time [t]. The peaks are 
+    the points at which the wavefunction differs from the maximum by less than 
+    the threshold [eps].'''
+    M = max(wavefunction)
+    out = []
+    for i, val in enumerate(wavefunction):
+        if M - val < eps:
+            out.append(i)
+    return out
+
+
