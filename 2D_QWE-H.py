@@ -10,12 +10,12 @@ from qiskit.quantum_info import Statevector
 #                             GLOBAL VARIABLES                                 #
 #------------------------------------------------------------------------------#
 
-n = 11
+n = 3
 a = 1
 var = 3
-t = 300
+t = 30
 dt = 1
-fps = 30
+fps = 10
 
 #==============================================================================#
 #                              OTHER FUNCTIONS                                 #
@@ -277,10 +277,6 @@ def BHamiltonian2D_H(n : int, B, cond='Neumann'):
         raise NotImplementedError
     return H
 
-# print(A(3), '\n')
-# print(B(3), '\n')
-# print(LaplacianSim(3), '\n')
-
 
 
 
@@ -313,15 +309,6 @@ def hexGridEuclidean(n : int, a : float, cond='Neumann'):
 
 
 
-# x = []
-# y = []
-# for i in hexGridEuclidean(3, 1):
-#     for j in i:
-#         x.append(j[0])
-#         y.append(j[1])
-# fig = plt.figure()
-# plt.scatter(x, y)
-# plt.show()
 
 
 
@@ -339,6 +326,19 @@ def initialGaussian(n : int, a : float, var, cond='Neumann'):
             print(HE.gaussian2D(vert[0], vert[1], mux, muy, var))
             out[i].append(HE.gaussian2D(vert[0], vert[1], mux, muy, var))
             print(colored(out, 'light_green'), end='\n\n')
+    return np.array(out)
+
+def initialRicher(n : int, a : float, var, cond='Neumann'):
+    '''Returns the initial condition of the Richer wavelet on the hexagonal grid.
+    The pulse is centered at the central point in the grid.'''
+    out = []
+    grid = hexGridEuclidean(n, a, cond)
+    mux = grid[n // 2][n // 2][0]
+    muy = grid[n // 2][n // 2][1]
+    for i, row in enumerate((grid)):
+        out.append([])
+        for vert in row:
+            out[i].append(HE.richer2D(vert[0], vert[1], mux, muy, var))
     return np.array(out)
             
             
@@ -368,36 +368,14 @@ def initialFix2(init, cond='Neumann'):
         raise NotImplementedError
     return out
 
-# Example:
-# init = initialGaussian(3, 1, 1)
-# print(init, '\n')
-# init2 = initialFix(init)
-# print(init2, '\n')
-# init3 = initialFix2(init2)
-# print(init3, '\n')
-
 
         
 #==============================================================================#
 #                             MAIN FUNCTION                                    #
 #------------------------------------------------------------------------------#
 
-def main(n : int, a : float, var, t : int, dt : int, cond='Neumann'):
-    '''The main function that evolves the initial state according to the 
-    Hamiltonian dynamics.'''
-    # Initial condition:
-    init = initialFix2(initialFix(initialGaussian(n, a, var), cond), cond)
-    
-    # Hamiltonian matrices:
-    L = LaplacianSim(n, cond)
-    Bmat = B(n, cond)
-    H = BHamiltonian2D_H(n, Bmat, cond)
-    # Evolution:
-    state = HE.evolve()
-    return state
 
-
-def animateEvolution2D(H, psi0, tmax, dt, n : int):
+def animateEvolution2D_H(H, psi0, tmax, dt, n : int):
     '''Animates the field of each vertex under the influence of
     a Hamiltonian [H] and given the starting state [psi0]. The
     discretization is dictated by the time step [dt] and the
@@ -420,7 +398,7 @@ def animateEvolution2D(H, psi0, tmax, dt, n : int):
            
     # Plotting
     global wave
-    fig = plt.figure()
+    fig = plt.figure(figsize=(8, 7))
     ax = fig.add_subplot(111, projection='3d')
     # fig, ax = plt.subplots(subplot_kw=dict(projection='3d'))   
     
@@ -437,16 +415,9 @@ def animateEvolution2D(H, psi0, tmax, dt, n : int):
         for vert in row:
             xs.append(vert[0])
             ys.append(vert[1])
-    print(xs, ys)
-    
-    # Convert the wavefunctions to a 2D array (UNNECESSARY)
-    # wavefunctionsFIXED = []
-    # for wave in wavefunctions:
-    #     wave = np.array(wave).reshape((m, m))
-    #     print(colored(wave, 'light_blue'))
-    #     wavefunctionsFIXED.append(wave)
-    
+    print(xs, ys)    
     print(colored((len(xs), len(ys), len(wavefunctions[0])), 'red'))
+    
     
     wave = ax.plot_trisurf(xs, ys, wavefunctions[0], color='b')
     #ax.set(xlim=[0, 1], ylim=[-1, 1], xlabel='Position', ylabel='Amplitude')
@@ -467,16 +438,14 @@ def animateEvolution2D(H, psi0, tmax, dt, n : int):
 
 
 # Example:
-#print(B(3))
-#print(B(5))
 H = BHamiltonian2D_H(n, B(n))
 
 # we still need to normalize the initial condition
-init = initialFix2(initialFix(initialGaussian(n, a, var)))
+init = initialFix2(initialFix(initialRicher(n, a, var)))
 psi0 = Statevector(init / HE.euclidean_norm(init))
 print(psi0.is_valid())
 
-animateEvolution2D(H, psi0, t, dt, n ** 2)
+animateEvolution2D_H(H, psi0, t, dt, n ** 2)
 
 # TODO:
 # 1. Implement the function above in a correct manner to accomodate the hexagonal grid.     X
