@@ -12,9 +12,9 @@ from qiskit.quantum_info import Statevector
 #                             GLOBAL VARIABLES                                 #
 #------------------------------------------------------------------------------#
 
-n = 31
-a = 1 
-var = 4
+n = 21
+a = 0.5
+var = 1.5
 t = 30
 dt = 0.1
 fps = 10
@@ -499,15 +499,18 @@ def plotWavefunction2D_H(H, psi0, t, n : int):
     return wavefunction
 
 H = BHamiltonian2D_H(n, B(n), 'Neumann')
-print(B(n))
-print(H)
+# print(B(n))
+# print(H)
 init = initialFix2(initialFix(initialRicher(n, a, var)))
+print(len(init), 1)
 psi0 = Statevector(init / HE.euclidean_norm(init))
-wave = plotWavefunction2D_H(H, psi0, 8, n)
+print(len(psi0.data), 2)
+wave = plotWavefunction2D_H(H, psi0, 1.7, n)
 
 # TODO:
 # 1. (Long term) Implement the Dirichlet boundary conditions.
 # 2. Implement memoization for time evolution functions.            DIDNT WORK
+# 3. Prepare a json file which stores the matrices for different n.      
 
 
 
@@ -548,12 +551,27 @@ def anisotropy(wavefunction, n : int, eps : float):
     maxDist = 0
     minDist = 10 ** 10
     for peak in peaksList:
-        print(peak)
+        # print(peak)
         dist = np.sqrt((source[0] - grid[peak // n][peak % n][0]) ** 2 + (source[1] - grid[peak // n][peak % n][1]) ** 2)
         if dist > maxDist:
             maxDist = dist
+            maxPeak = peak
         if dist < minDist:
             minDist = dist
+            minPeak = peak
+    print('#================================#')
+    print('Max peak: ', maxPeak)
+    print('Max distance: ', maxDist)
+    theta1 = np.arctan((grid[maxPeak // n][maxPeak % n][1] - source[1]) / (grid[maxPeak // n][maxPeak % n][0] - source[0]))
+    print('Theta1: ', theta1)
+    print('#--------------------------------#')
+    print('Min peak: ', minPeak)
+    print('Min distance: ', minDist)
+    theta2 = np.arctan((grid[minPeak // n][minPeak % n][1] - source[1]) / (grid[minPeak // n][minPeak % n][0] - source[0]))
+    print('Theta2: ', theta2)
+    print('#--------------------------------#')
+    print('Anisotropy: ', maxDist / minDist)
+    print('#================================#')
     return maxDist / minDist
 
 print(anisotropy(wave, n, 0.01))

@@ -14,6 +14,7 @@ import numpy as np
 import matplotlib.animation as animation
 from termcolor import colored
 from math import ceil
+import json
 
 #==============================================================================#
 # GLOBAL VARIABLES
@@ -38,8 +39,25 @@ def hamiltonian(A, t0):
 
 def evolveTime(H, t, psi0 : Statevector):
     '''Given a Hamiltonian H, time t, and initial state psi0, return the 
-    evolved state psi(t).'''
-    U = expm(-1j * H * t)
+    evolved state psi(t).
+    
+    The function also stores the unitary matrix U into a .json file.'''
+    print(H.shape, 'H shape')
+    with open('U.json', 'r') as u:
+        us = json.load(u)
+    if f'{H},{len(H)},{t}' not in us.keys():
+        U = np.real(expm(-1j * H * t))
+        print(U.shape, 'U shape')
+        us[f'{H},{len(H)},{t}'] = U.tolist()
+        print(U.shape, 'U shape 2')
+        with open('U.json', 'w') as u:
+            json.dump(us, u, indent=4)
+    else:
+        U = np.array(us[f'{H},{len(H)},{t}'])
+        print(U.shape, 'U shape 3')
+    print(U.shape, 'U shape 4')
+    print(U)
+    print(len(psi0.data))
     psi_t = psi0.evolve(Operator(U))
     return psi_t
 
@@ -494,14 +512,14 @@ def BHamiltonian1D(n : int, B):
 
 
 
-def BHamiltonian2D(n : int, B, cond='Neumann'):
+def BHamiltonian2D(n : int, B, a, cond='Neumann'):
     '''Given an integer [n] and matrix [B], the function returns the Hamiltonian matrix 
     for a graph with [n ** 2] vertices and [2 * n ** 2 - 2 * n] edges, as dictated by the article.'''
     v = n ** 2
     if cond == 'Neumann':
-        H = np.block([[np.zeros((n ** 2, n ** 2)), B], [np.transpose(B), np.zeros((2 * n ** 2 - 2 * n, 2 * n ** 2 - 2 * n))]]) / (n + 1)
+        H = np.block([[np.zeros((n ** 2, n ** 2)), B], [np.transpose(B), np.zeros((2 * n ** 2 - 2 * n, 2 * n ** 2 - 2 * n))]]) / (a)
     elif cond == 'Dirichlet':
-        H = np.block([[np.zeros((n ** 2, n ** 2)), B], [np.transpose(B), np.zeros((2 * n ** 2 + 2 * n - 4, 2 * n ** 2 + 2 * n - 4))]]) / (n + 1)
+        H = np.block([[np.zeros((n ** 2, n ** 2)), B], [np.transpose(B), np.zeros((2 * n ** 2 + 2 * n - 4, 2 * n ** 2 + 2 * n - 4))]]) / (a)
     return H
 
 
