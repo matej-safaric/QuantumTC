@@ -37,27 +37,23 @@ def hamiltonian(A, t0):
     H = 1j * logm(A) / t0
     return H
 
-def evolveTime(H, t, psi0 : Statevector):
+def evolveTime(H, t, psi0 : Statevector, memo : bool = False):
     '''Given a Hamiltonian H, time t, and initial state psi0, return the 
     evolved state psi(t).
     
     The function also stores the unitary matrix U into a .json file.'''
-    print(H.shape, 'H shape')
-    with open('U.json', 'r') as u:
-        us = json.load(u)
-    if f'{H},{len(H)},{t}' not in us.keys():
-        U = np.real(expm(-1j * H * t))
-        print(U.shape, 'U shape')
-        us[f'{H},{len(H)},{t}'] = U.tolist()
-        print(U.shape, 'U shape 2')
-        with open('U.json', 'w') as u:
-            json.dump(us, u, indent=4)
+    if memo:
+        with open('U.json', 'r') as u:
+            us = json.load(u)
+        if f'{H},{len(H)},{t}' not in us.keys():
+            U = np.real(expm(-1j * H * t))
+            us[f'{H},{len(H)},{t}'] = U.tolist()
+            with open('U.json', 'w') as u:
+                json.dump(us, u, indent=4)
+        else:
+            U = np.array(us[f'{H},{len(H)},{t}'])
     else:
-        U = np.array(us[f'{H},{len(H)},{t}'])
-        print(U.shape, 'U shape 3')
-    print(U.shape, 'U shape 4')
-    print(U)
-    print(len(psi0.data))
+        U = np.real(expm(-1j * H * t))
     psi_t = psi0.evolve(Operator(U))
     return psi_t
 
@@ -548,7 +544,7 @@ def example2_V2():
     H = BHamiltonian1D(81, B_Dirichlet(81))
     animateEvolution_V2(H, Statevector(init), 1200000, 300)
     
-# example2_V2()
+example2_V2()
 
 
 
