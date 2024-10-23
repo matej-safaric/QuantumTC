@@ -544,7 +544,7 @@ def example2_V2():
     H = BHamiltonian1D(81, B_Dirichlet(81))
     animateEvolution_V2(H, Statevector(init), 1200000, 300)
     
-example2_V2()
+# example2_V2()
 
 
 
