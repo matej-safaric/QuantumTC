@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.linalg import expm
 import matplotlib.pyplot as plt
-from Libraries import HamiltonianEvolution as HE
 from termcolor import colored
 from qiskit.quantum_info import Operator, Statevector
 
@@ -111,7 +110,7 @@ def plotEvolution(evolution, n : int, i=0, optionalName : str = ''):
     for j in range(n):
         plt.plot(np.arange(0, T, dt), np.abs(evolution[:,j])**2, label = f'|{j}>')
     plt.legend()
-    plt.savefig(f"Hamiltonians/Plots/evolution{i}{'-' + optionalName if optionalName != '' else ''}.png")
+    plt.savefig(f"Hamiltonians/Plots/ConstantHamiltonians/evolution{i}{'-' + optionalName if optionalName != '' else ''}.png")
     axs.clear()
     
     
@@ -122,18 +121,25 @@ def plotEvolution(evolution, n : int, i=0, optionalName : str = ''):
 
 # The following is the meat of this code.
 
+def randState(n):
+    '''Generates a random statevector of size n.'''
+    rand = randComplex(n)
+    return Statevector(rand / euclidean_norm(rand))
+
 #--------------------------- Fixed initial condition --------------------------#
 
 # We will now generate a bunch of random Hamiltonians and see what happens
 # when the initial condition is set to |0>.
-for i in range(simNum):
-    H = randH(n)
-    evolution = evolve(H, Statevector([1] + (n-1) * [0]), T, dt)
-    print(colored(f'Simulation {i+1} of {simNum} complete.                      ', 'green'), end='\r')
-    plotEvolution(evolution, n, i, 'fixedInitialCondition')
-    
 
-print(colored('\n\n#=====================================================================#\n\n', 'green'))
+def main1():
+    for i in range(simNum):
+        H = randH(n)
+        evolution = evolve(H, Statevector([1] + (n-1) * [0]), T, dt)
+        print(colored(f'Simulation {i+1} of {simNum} complete.                      ', 'green'), end='\r')
+        plotEvolution(evolution, n, i, 'fixedInitialCondition')
+        
+
+    print(colored('\n\n#=====================================================================#\n\n', 'green'))
 
 
 #--------------------------- Random initial condition -------------------------#
@@ -141,11 +147,11 @@ print(colored('\n\n#============================================================
 # Now we will fix a random Hamiltonian and apply it to a bunch of random
 # initial conditions.
 
-H = randH(n)
-for i in range(simNum):
-    rand = randComplex(n)
-    psi0 = Statevector(rand / euclidean_norm(rand))
-    evolution = evolve(H, psi0, T, dt)
-    print(colored(f'Simulation {i+1} of {simNum} complete.                      ', 'green'), end='\r')
-    plotEvolution(evolution, n, i, 'randomInitialCondition')
+def main2():
+    H = randH(n)
+    for i in range(simNum):
+        psi0 = randState(n)
+        evolution = evolve(H, psi0, T, dt)
+        print(colored(f'Simulation {i+1} of {simNum} complete.                      ', 'green'), end='\r')
+        plotEvolution(evolution, n, i, 'randomInitialCondition')
 
