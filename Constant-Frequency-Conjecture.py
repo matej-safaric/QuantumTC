@@ -1,6 +1,8 @@
 from Hamiltonians import ConstantHamiltonians as ch
 from scipy import fft
 import numpy as np
+import matplotlib.pyplot as plt
+from termcolor import colored
 
 #==============================================================================#
 #                                 DESCRIPTION                                  #
@@ -20,11 +22,11 @@ import numpy as np
 #                               GLOBAL VARIABLES                               #
 #------------------------------------------------------------------------------#
 
-n = 3
+n = 5
 T = 10
-dt = 0.1
+dt = 0.01
 # Number of simulations to be done:
-simNum = 10 
+simNum = 3
 
 #==============================================================================#
 #                                    MAIN                                      #
@@ -46,7 +48,17 @@ for i in range(simNum):
     
 #----------------------------- Fourier Transform ------------------------------#
 for sim in simulations:
+    N = len(sim[0])
+    fig, axs = plt.subplots(nrows=2)
     for state in sim:
-        state = fft.fft(state)
-        print(state)
-    
+        # Take the probabilities of each state
+        stateP = (np.abs(state) ** 2)
+        axs[0].plot(np.arange(0, T, dt), stateP)
+        # Fourier transform of each state's behavior:
+        freq = fft.fftfreq(N, dt)[:N//2]
+        # Limit the frequency to under 1 (there is nothing after that):
+        freqUnder1 = freq[freq < 1]
+        stateFFT = (fft.fft(stateP)[:N//2])[:len(freqUnder1)]
+        axs[1].plot(freqUnder1, np.abs(stateFFT))
+    plt.grid()
+    plt.show()
