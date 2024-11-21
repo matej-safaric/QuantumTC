@@ -108,47 +108,47 @@ print(len(H_W), len(H_W[0]), len(H_W[-1]))
 
 
 
-def animateEvolution_V2(H, psi0, tmax, dt):
-    '''Animates the field of each vertex under the influence of 
-    a Hamiltonian [H] and given the starting state [psi0]. The 
-    discretization is dictated by the time step [dt] and the
-    total time [tmax].
+# def animateEvolution_V2(H, psi0, tmax, dt):
+#     '''Animates the field of each vertex under the influence of 
+#     a Hamiltonian [H] and given the starting state [psi0]. The 
+#     discretization is dictated by the time step [dt] and the
+#     total time [tmax].
     
-    This function is different from the previous one in the 
-    sense, that it goes further with modelling whole complex
-    values of each vertex, instead of just their magnitudes.'''
-    # Data preparation
-    n = len(psi0) // 2 # n is the number of vertices
-    m = len(psi0) # m is the size of the initial state: m = 2n + 1
-    ts = arange(0, tmax, dt) # Time steps
+#     This function is different from the previous one in the 
+#     sense, that it goes further with modelling whole complex
+#     values of each vertex, instead of just their magnitudes.'''
+#     # Data preparation
+#     n = len(psi0) // 2 # n is the number of vertices
+#     m = len(psi0) # m is the size of the initial state: m = 2n + 1
+#     ts = np.arange(0, tmax, dt) # Time steps
 
-    # Evolution
-    wavefunctionsR = []
-    wavefunctionsI = []
-    wavefunctionsR.append(np.real(psi0.data[:n]))
-    wavefunctionsI.append(np.imag(psi0.data[:n]))
-    for i, t in enumerate(ts):
-        psi = evolveTime(H, t, psi0)
-        vals = np.sqrt(psi.probabilities()[:n])
-        wavefunctionsR.append(np.real(psi.data[:n]))
-        wavefunctionsI.append(np.imag(psi.data[:n]))
-        print(f'Evolution {i} of {len(ts)} completed.', end='\r')
-    print(colored('Evolutions completed. Plotting...', 'green'))
+#     # Evolution
+#     wavefunctionsR = []
+#     wavefunctionsI = []
+#     wavefunctionsR.append(np.real(psi0.data[:n]))
+#     wavefunctionsI.append(np.imag(psi0.data[:n]))
+#     for i, t in enumerate(ts):
+#         psi = evolveTime(H, t, psi0)
+#         vals = np.sqrt(psi.probabilities()[:n])
+#         wavefunctionsR.append(np.real(psi.data[:n]))
+#         wavefunctionsI.append(np.imag(psi.data[:n]))
+#         print(f'Evolution {i} of {len(ts)} completed.', end='\r')
+#     print(colored('Evolutions completed. Plotting...', 'green'))
            
-    # Plotting
-    fig, axs = plt.subplots(2, 1, sharex=True)
-    x = [i / (n-1) for i in range(n)]
-    waveR = axs[0].plot(x, wavefunctionsR[0])[0]
-    waveI = axs[1].plot(x, wavefunctionsI[0])[0]
-    axs[0].set(xlim=[0, 1], ylim=[-1, 1], xlabel='Position', ylabel='Real Amplitude')
-    axs[1].set(xlim=[0, 1], ylim=[-1, 1], xlabel='Position', ylabel='Imaginary Amplitude')
+#     # Plotting
+#     fig, axs = plt.subplots(2, 1, sharex=True)
+#     x = [i / (n-1) for i in range(n)]
+#     waveR = axs[0].plot(x, wavefunctionsR[0])[0]
+#     waveI = axs[1].plot(x, wavefunctionsI[0])[0]
+#     axs[0].set(xlim=[0, 1], ylim=[-1, 1], xlabel='Position', ylabel='Real Amplitude')
+#     axs[1].set(xlim=[0, 1], ylim=[-1, 1], xlabel='Position', ylabel='Imaginary Amplitude')
         
-    def update(frame):
-        yR = wavefunctionsR[frame]
-        yI = wavefunctionsI[frame]
-        waveR.set_data(x, yR)
-        waveI.set_data(x, yI)
-        return [waveR, waveI]
+#     def update(frame):
+#         yR = wavefunctionsR[frame]
+#         yI = wavefunctionsI[frame]
+#         waveR.set_data(x, yR)
+#         waveI.set_data(x, yI)
+#         return [waveR, waveI]
     
-    anime = animation.FuncAnimation(fig=fig, func=update, frames=(len(ts) - 1), interval=1000 // fps)
-    plt.show()
+#     anime = animation.FuncAnimation(fig=fig, func=update, frames=(len(ts) - 1), interval=1000 // fps)
+#     plt.show()
