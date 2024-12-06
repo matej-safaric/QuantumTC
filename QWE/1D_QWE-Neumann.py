@@ -13,6 +13,9 @@ import matplotlib.animation as animation
 # The purpose of this code is to see what kinds of unitary transformations 
 # we can get from the Hamiltonians as defined in the article by Costa,...
 
+# Further down, we start to investigate dampening effects using variation in
+# the weights of the edge set of our graph.
+
 n = 60
 k = 6
 rounding = 3
