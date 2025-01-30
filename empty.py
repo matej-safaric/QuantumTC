@@ -1,5 +1,6 @@
 # Description: This is an empty file for testing purposes
 import numpy as np
+from termcolor import colored
 
 
 #==============================================================================#
@@ -105,4 +106,114 @@ def f3(f : func, range, dt):
     anime = animation.FuncAnimation(fig=fig, func=update, frames=(len(ts) - 1), interval=1000 // fps)
     plt.show()
     
-f3(lambda t: t, pi, 0.01)
+# f3(lambda t: t, pi, 0.01)
+
+
+
+
+
+
+#==============================================================================#
+#                             Adjacency matrices                               #
+#------------------------------------------------------------------------------#
+
+
+# Let's set up some code that makes a discrete mesh graph with edges going
+# in both directions for every pair of vertices while also having different 
+# weights
+
+# We are starting off with a 1-dimensional mesh of length n.
+
+n = 5
+
+l = 1
+r = 2
+
+def B_bidirec(n, l, r):
+    out1 = np.zeros((n, n-1))
+    for i in range(n-1):
+        out1[i, i] = r
+        out1[i+1, i] = -r
+    out2 = np.zeros((n, n-1))
+    for i in range(n-1):
+        out2[i,i] = -l
+        out2[i+1, i] = l
+    return np.block([out1, out2])
+
+def Ham(B):
+    (r, c) = np.shape(B)
+    return np.block([[np.zeros((r,r)), B], [B.T.conj(), np.zeros((c,c))]])
+
+# print(np.matmul(Ham(B_bidirec(n,l,r)), Ham(B_bidirec(n,l,r))))
+
+
+
+
+#==============================================================================#
+#                     Testing a weird imaginary Hamiltonian                    #
+#------------------------------------------------------------------------------#
+
+H = np.array([[0, np.sqrt(2) * 1j], [np.sqrt(2) * -1j, 0]])
+H1 = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 0]])
+
+
+
+
+
+# The following is an excerpt of the code from the file ConstantHamiltonians.py
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -#
+
+def evolutionFunction(H, t):
+    '''Returns the unitary matrix for the Hamiltonian H at time t.'''
+    return expm(-1j * H * t)
+
+def evolve(H, psi0 : Statevector, T, dt):
+    '''Plots the time evolution of the starting state [psi0] under the
+    Hamiltonian H.'''
+    evolution = []
+    for i, t in enumerate(np.arange(0, T, dt)):
+        U = evolutionFunction(H, t)
+        U = Operator(evolutionFunction(H, t))
+        psi = psi0.evolve(U)
+        evolution.append(psi)
+        print(colored(f'Evolution {i} out of {int(T/dt)} complete...', 'yellow'), end='\r')
+    return evolution
+
+
+#----------------------------- Plotting the evolution -------------------------#
+# The following function plots the evolution of the system.
+# It actually only plots the probability of each state, which 
+# can be safely ignored, since the purpose of this code is to
+# see whether all quantum systems follow wave-like behaviour.
+
+
+T = 20
+dt = 0.01
+
+def plotEvolution(evolution, n : int, i=0, optionalName : str = ''):
+    '''Plots the evolution of the system.'''
+    evolution = np.array(evolution)
+    fig, axs = plt.subplots(nrows=1)
+    for j in range(n):
+        plt.plot(np.arange(0, T, dt), np.abs(evolution[:,j])**2, label = f'|{j}>')
+    plt.legend()
+    plt.savefig(f"Hamiltonians/Plots/ConstantHamiltonians/evolution{i}{'-' + optionalName if optionalName != '' else ''}.png")
+    axs.clear()
+    
+    
+def euclidean_norm(v):
+    '''Given a vector in C, the function calculates its modulus.'''
+    return np.sqrt(np.sum(np.abs(v)**2))
+
+def randComplex(shape : int):
+    '''Generates [shape] random complex numbers from the unit disk in the 
+    form of a numpy array.'''
+    return np.sqrt(np.random.uniform(0, 1, shape)) * np.exp(1.j * np.random.uniform(0, 2 * np.pi, shape))
+
+def randState(n):
+    '''Generates a random statevector of size n.'''
+    rand = randComplex(n)
+    return Statevector(rand / euclidean_norm(rand))
+
+# plotEvolution(evolve(H, randState(2), T, dt), 2, optionalName='WUBBAWUBBA')
+plotEvolution(evolve(H1, randState(3), T, dt), 3, optionalName='WUBBAWUBBA1')

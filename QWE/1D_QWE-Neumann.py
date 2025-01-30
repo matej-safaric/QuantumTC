@@ -16,23 +16,23 @@ import matplotlib.animation as animation
 # Further down, we start to investigate dampening effects using variation in
 # the weights of the edge set of our graph.
 
-n = 60
+n = 80
 k = 6
 rounding = 3
 
 fps = 30
-T = 3000
-dt = 12
+T = 9000
+dt = 45
 
 # Gaussian
-mu1 = 11
-var1 = 3
+mu1 = 30
+var1 = 4
 
 # Richer
-mu2 = 11
-var2 = 16
+mu2 = 20
+var2 = 20
 
-j = 30
+j = 50
 d = 200
 
 np.get_printoptions()['linewidth']
@@ -46,7 +46,7 @@ np.set_printoptions(suppress = True)
 
 def euclidean_norm(v):
     '''Given a vector v, the function returns the Euclidean norm of v.'''
-    return np.sqrt(np.dot(v, v))
+    return np.sqrt(np.dot(v, np.conj(v)))
 
 def evolutionTransform(H, t):
     return np.round(np.real(expm(-1j * H * t)), rounding)
@@ -187,6 +187,21 @@ def initial_condition_richer(n : int, mu, var):
         out.append(0)
     return out
 
+def initial_condition_richer_moving(n : int, mu, var, direc=1):
+    '''Returns the initial state of a quantum system, such that the 
+    generated wave propagation is a richer packet moving in the 
+    direction specified by [dir], whose value is either 1 or -1.'''
+    outV = []
+    for i in range(n):
+        outV.append(richer(i, 1.0, mu, var))
+    outV = [i / euclidean_norm(outV) for i in outV]
+    outE = []
+    for i in range(n-1):
+        outE.append(direc * 1j * richer(i + 0.5, 1.0, mu, var))
+    print(colored(outE, 'cyan'))
+    outE = [i / euclidean_norm(outE) for i in outE]
+    return outV + outE
+
 
 def AugB_Neumann(n : int, j : int, d : int, f : func):
     '''Given a 1D grid of [n] points, the function gives the matrix B, such
@@ -220,7 +235,7 @@ def AugB_Neumann(n : int, j : int, d : int, f : func):
 # print('\n')
 # print(B_Neumann(n))
 
-def animateEvolution_V2(H, psi0, T, dt, glb_phase_shift=0, imag : bool=False):
+def animateEvolution_V2(H, psi0, T, dt, glb_phase_shift=0, imag : bool=False, fft : bool=False, bidirected : bool=False):
     '''Animates the field of each vertex under the influence of 
     a Hamiltonian [H] and given the starting state [psi0]. The 
     discretization is dictated by the time step [dt] and the
@@ -229,7 +244,10 @@ def animateEvolution_V2(H, psi0, T, dt, glb_phase_shift=0, imag : bool=False):
     The glb_phase_shift is an optional parameter that shifts the 
     global phase for each datapoint by a fixed constant.'''
     # Data preparation
-    n = len(psi0) // 2  + 1# n is the number of vertices
+    if bidirected:
+        n = (len(psi0) + 2) // 3
+    else:
+        n = len(psi0) // 2  + 1# n is the number of vertices
     ts = np.arange(0, T, dt)
     # Evolution
     wavefunctionsVr = []
@@ -263,27 +281,55 @@ def animateEvolution_V2(H, psi0, T, dt, glb_phase_shift=0, imag : bool=False):
     xE = [i + 0.5 for i in range(n-1)]
     waveVr = axs[0].plot(xV, wavefunctionsVr[0])[0]
     line = axs[0].plot(xV, np.zeros(len(xV)), linestyle='dashed')[0]
-    waveEr = axs[1].plot(xE, wavefunctionsEr[0])[0]
+    if bidirected:
+        waveEr1 = axs[1].plot(xE, wavefunctionsEr[0][:n-1])[0]
+        waveEr2 = axs[1].plot(xE, wavefunctionsEr[0][n-1:])[0]
+        axs[1].legend([waveEr1, waveEr2], ['waveEr1', 'waveEr2'])
+
+    else:
+        waveEr = axs[1].plot(xE, wavefunctionsEr[0])[0]
     
     if imag:
-        waveVi = axs[0].plot(xV, wavefunctionsVi[0])[0]
-        waveEi = axs[1].plot(xE, wavefunctionsEi[0])[0]
+        if bidirected:
+            waveVi = axs[0].plot(xV, wavefunctionsVi[0])[0]
+            waveEi1 = axs[1].plot(xE, wavefunctionsEi[0][:n-1])[0]
+            waveEi2 = axs[1].plot(xE, wavefunctionsEi[0][n-1:])[0]
+        else:
+            waveVi = axs[0].plot(xV, wavefunctionsVi[0])[0]
+            waveEi = axs[1].plot(xE, wavefunctionsEi[0])[0]
     axs[0].set(ylim=[-1, 1], xlabel='Position', ylabel='Vertex Amplitude')
     axs[1].set(ylim=[-1, 1], xlabel='Position', ylabel='Edge Amplitude')
         
     def update(frame):
         yVr = wavefunctionsVr[frame]
-        yEr = wavefunctionsEr[frame]
+        if bidirected:
+            yEr1 = wavefunctionsEr[frame][:n-1]
+            yEr2 = wavefunctionsEr[frame][n-1:]
+            waveEr1.set_data(xE, yEr1)
+            waveEr2.set_data(xE, yEr2)
+        else:
+            yEr = wavefunctionsEr[frame]
+            waveEr.set_data(xE, yEr)
         waveVr.set_data(xV, yVr)
-        waveEr.set_data(xE, yEr)
         
+        # TODO: IMPLEMENT THE bidirected CONDITION HERE!!!!!
         if imag:
             yVi = wavefunctionsVi[frame]
             yEi = wavefunctionsEi[frame]
             waveVi.set_data(xV, yVi)
             waveEi.set_data(xE, yEi)
         #return [waveR, waveI]
-        return [waveVr, waveVi, waveEr, waveEi] if imag else [waveVr, waveEr]
+        if imag:
+            if bidirected:
+                pass
+            else:
+                return [waveVr, waveVi, waveEr, waveEi]
+        else:
+            if bidirected:
+                return [waveVr, waveEr1, waveEr2]
+
+            else:
+                return [waveVr, waveEr]
     
     anime = animation.FuncAnimation(fig=fig, func=update, frames=(len(ts) - 1), interval=1000 // fps)
     plt.show()
@@ -319,6 +365,7 @@ def snapshot(H, psi0, t):
 init1 = initial_condition_gaussian(n, mu1, var1)
 init2 = initial_condition_richer(n, mu2, var2)
 init3 = initial_condition_gaussian_moving(n, mu1, var1)
+init4 = initial_condition_richer_moving(n, mu2, var2)
 
 psi0_1 = Statevector(init1 / euclidean_norm(init1))
 psi0_2 = Statevector(init3 / euclidean_norm(init3))
@@ -369,4 +416,52 @@ B5 = AugB_Neumann(n, j, d, lambda x: (x-j+2))
 H5 = BHamiltonian1D(n, B5)
 
 #snapshot(H1, psi0, 2 * T / 3)
-animateEvolution_V2(H5, psi0_2, T, dt, glb_phase_shift=-np.pi / 4, imag=True)
+animateEvolution_V2(H2, psi0_2, T, dt, glb_phase_shift=-np.pi / 4, imag=False)
+
+
+
+
+
+
+#==============================================================================#
+#                               BIDIRECTED GRAPHS                              #
+#------------------------------------------------------------------------------#
+
+l = 0.6
+r = 3
+
+def B_bidirec(n, l, r):
+    out1 = np.zeros((n, n-1))
+    for i in range(n-1):
+        out1[i, i] = r
+        out1[i+1, i] = -r
+    out2 = np.zeros((n, n-1))
+    for i in range(n-1):
+        out2[i,i] = -l
+        out2[i+1, i] = l
+    print(np.block([out1, out2]).shape)
+    return np.block([out1, out2])
+
+def Ham(B):
+    (r, c) = np.shape(B)
+    return np.block([[np.zeros((r,r)), B], [B.T.conj(), np.zeros((c,c))]]) / (n-1)
+
+
+#------------------------------------------------------------------------------#
+#       Experiments
+
+
+H2a = Ham(B_bidirec(n,l,r))
+d = psi0_2.data
+print(colored(d.shape, 'red'))
+
+tmp = []
+for i in d[n:]:
+    tmp.append(l / r * i * 1j)
+    #tmp.append(-1 * i * 1j)
+psi01234 = np.concatenate((d, tmp))
+psi0_2a = Statevector(psi01234 / euclidean_norm(psi01234))
+# print('ASDASDASDASDASD:', psi01234.shape, psi0_2a.data.shape)
+# print(H2a.shape)
+# print(len(psi0_2a))
+# animateEvolution_V2(H2a, psi0_2a, T, dt, glb_phase_shift=np.pi/4, bidirected=True)
